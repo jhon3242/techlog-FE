@@ -202,32 +202,36 @@ function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredPosts.map((post) => (
               <motion.article
-                key={post.id}
-                className={`${post.brandColor || 'bg-white'} rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 backdrop-blur-sm bg-opacity-80 cursor-pointer relative`}
-              >
-                <img
-                  src={post.imageUrl}
-                  alt={post.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-6 flex flex-col h-full">
-                  <div className="flex-grow">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{post.title}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{post.company}</p>
-                    <p className="text-gray-700 mb-4 line-clamp-3">{post.summary}</p>
+              key={post.id}
+              whileHover={{ scale: 1.02 }}  // ✅ 확대 효과 추가
+              className={`${post.brandColor || 'bg-white'} rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 backdrop-blur-sm bg-opacity-80 cursor-pointer relative`}
+            >
+              {/* ✅ 오버레이 추가 */}
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+            
+              <img
+                src={post.imageUrl}
+                alt={post.title}
+                className="w-full h-48 object-cover"
+              />
+              <div className="p-6 flex flex-col h-full">
+                <div className="flex-grow">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{post.title}</h3>
+                  <p className="text-sm text-gray-600 mb-2">{post.company}</p>
+                  <p className="text-gray-700 mb-4 line-clamp-3">{post.summary}</p>
+                </div>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex items-center space-x-1 bg-indigo-50 px-4 py-2 rounded-lg shadow-sm">
+                    <ThumbsUp className="h-5 w-5 text-indigo-600" />
+                    <span className="font-semibold text-indigo-700">{post.recommendations || 0}</span>
                   </div>
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex items-center space-x-1 bg-indigo-50 px-4 py-2 rounded-lg shadow-sm">
-                      <ThumbsUp className="h-5 w-5 text-indigo-600" />
-                      <span className="font-semibold text-indigo-700">{post.recommendations || 0}</span>
-                    </div>
-                    <div className="flex items-center space-x-1 bg-gray-50 px-4 py-2 rounded-lg shadow-sm">
-                      <Eye className="h-5 w-5 text-gray-600" />
-                      <span className="font-semibold text-gray-700">{post.views || 0}</span>
-                    </div>
+                  <div className="flex items-center space-x-1 bg-gray-50 px-4 py-2 rounded-lg shadow-sm">
+                    <Eye className="h-5 w-5 text-gray-600" />
+                    <span className="font-semibold text-gray-700">{post.views || 0}</span>
                   </div>
                 </div>
-              </motion.article>
+              </div>
+            </motion.article>
             ))}
           </div>
         )}
