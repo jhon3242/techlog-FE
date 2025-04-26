@@ -37,6 +37,7 @@ function App() {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
+  const [loadError, setLoadError] = useState(false); // 🚨 실패 감지용 추가
   const size = 10;
 
   useEffect(() => {
@@ -91,8 +92,12 @@ function App() {
 
       setPosts((prev) => [...prev, ...transformed]);
       if (data.length < size) setHasMore(false);
+
       return true;
     } catch {
+      console.error("Failed to fetch posts");
+      setHasMore(false); // 🚨 실패했으면 더 이상 불러오기 안 함
+      setLoadError(true); // 🚨 실패 감지
       return false;
     } finally {
       setLoading(false);
@@ -101,7 +106,7 @@ function App() {
   };
 
   useEffect(() => {
-    if (!observerRef.current || loadingMore || !hasMore) return;
+    if (!observerRef.current || loadingMore || !hasMore || loadError) return;
 
     const observer = new IntersectionObserver(
       async ([entry]) => {
@@ -117,7 +122,7 @@ function App() {
     observer.observe(observerRef.current);
 
     return () => observer.disconnect();
-  }, [page, loadingMore, hasMore]);
+  }, [page, loadingMore, hasMore, loadError]);
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 300);
@@ -140,6 +145,7 @@ function App() {
   const handlePostClick = (post: BlogPost) => {
     setScrollPosition(window.scrollY);
     setSelectedPost(post);
+
     fetch(`http://localhost:8080/api/posters/${post.id}/view`, {
       method: "PUT",
       headers: {
@@ -158,6 +164,7 @@ function App() {
           "X-Device-Id": deviceId,
         },
       });
+
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId
@@ -204,7 +211,7 @@ function App() {
         </div>
       </nav>
 
-      {/* Search Bar */}
+      {/* Search */}
       <div className="pt-16 pb-8 max-w-4xl mx-auto px-4">
         <h1 className="text-4xl font-bold text-center mb-4">
           Discover Engineering Excellence
@@ -220,7 +227,7 @@ function App() {
         </div>
       </div>
 
-      {/* Posts Grid */}
+      {/* Posts */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4 pb-16">
         {filteredPosts.map((post) => (
           <motion.article
@@ -324,7 +331,7 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* ScrollTop Button */}
+      {/* ScrollTop */}
       {showScrollTop && (
         <button
           onClick={handleScrollToTop}
