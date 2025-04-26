@@ -205,6 +205,11 @@ function App() {
               key={post.id}
               whileHover={{ scale: 1.02 }}  // ✅ 확대 효과 추가
               className={`${post.brandColor || 'bg-white'} rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 backdrop-blur-sm bg-opacity-80 cursor-pointer relative`}
+              onClick={() => {
+                if (post.url) {
+                  window.open(post.url, '_blank');  // ✅ 클릭하면 새 창에서 post.url 열기
+                }
+              }}
             >
               {/* ✅ 오버레이 추가 */}
               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
