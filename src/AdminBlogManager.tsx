@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { fetchWithAdminHeader } from './utils/fetchWithAdminHeader';
 
 interface BlogResponse {
   title: string;
@@ -26,7 +27,7 @@ function AdminBlogManager() {
       setError(null);
 
       if (mode === 'single') {
-        const response = await fetch('http://localhost:8080/api/blog', {
+        const response = await fetchWithAdminHeader('http://localhost:8080/api/blog', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: urlInput })
@@ -37,7 +38,7 @@ function AdminBlogManager() {
         const data: BlogResponse = await response.json();
         setBlogs([data]);
       } else {
-        const response = await fetch('http://localhost:8080/api/blogs', {
+        const response = await fetchWithAdminHeader('http://localhost:8080/api/blogs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: urlInput })
@@ -62,7 +63,7 @@ function AdminBlogManager() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:8080/api/posters', {
+      const response = await fetchWithAdminHeader('http://localhost:8080/api/posters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

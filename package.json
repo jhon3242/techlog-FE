@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "cp techlog-env/front/env-common.env .env",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
