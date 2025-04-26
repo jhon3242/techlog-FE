@@ -36,15 +36,14 @@ function App() {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
-  const [loadError, setLoadError] = useState(false); // 🚨 실패 감지용 추가
   const size = 10;
 
   useEffect(() => {
     const storedDeviceId = localStorage.getItem("deviceId");
-    if (storedDeviceId) {
-      setDeviceId(storedDeviceId);
-    } else {
+    if (storedDeviceId) setDeviceId(storedDeviceId);
+    else {
       const newDeviceId = uuidv4();
       localStorage.setItem("deviceId", newDeviceId);
       setDeviceId(newDeviceId);
@@ -92,12 +91,11 @@ function App() {
 
       setPosts((prev) => [...prev, ...transformed]);
       if (data.length < size) setHasMore(false);
-
       return true;
     } catch {
       console.error("Failed to fetch posts");
-      setHasMore(false); // 🚨 실패했으면 더 이상 불러오기 안 함
-      setLoadError(true); // 🚨 실패 감지
+      setHasMore(false);
+      setLoadError(true);
       return false;
     } finally {
       setLoading(false);
@@ -120,7 +118,6 @@ function App() {
     );
 
     observer.observe(observerRef.current);
-
     return () => observer.disconnect();
   }, [page, loadingMore, hasMore, loadError]);
 
@@ -145,13 +142,9 @@ function App() {
   const handlePostClick = (post: BlogPost) => {
     setScrollPosition(window.scrollY);
     setSelectedPost(post);
-
     fetch(`http://localhost:8080/api/posters/${post.id}/view`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Device-Id": deviceId,
-      },
+      headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
     }).catch(console.error);
   };
 
@@ -164,7 +157,6 @@ function App() {
           "X-Device-Id": deviceId,
         },
       });
-
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId
@@ -183,6 +175,31 @@ function App() {
     }
   };
 
+  const renderSkeleton = (count = 6) =>
+    Array.from({ length: count }).map((_, idx) => (
+      <div
+        key={idx}
+        className="flex flex-col rounded-xl overflow-hidden shadow-md bg-gray-200 animate-pulse"
+      >
+        <div className="h-48 bg-gray-300"></div>
+        <div className="flex flex-col flex-1 p-6">
+          <div className="h-6 bg-gray-300 rounded mb-4"></div>
+          <div className="h-4 bg-gray-300 rounded mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+          <div className="flex justify-between mt-6 pt-4 border-t border-gray-300">
+            <div className="flex items-center space-x-1">
+              <div className="h-5 w-5 bg-gray-400 rounded"></div>
+              <div className="h-4 w-6 bg-gray-400 rounded"></div>
+            </div>
+            <div className="flex items-center space-x-1">
+              <div className="h-5 w-5 bg-gray-400 rounded"></div>
+              <div className="h-4 w-6 bg-gray-400 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    ));
+
   const filteredPosts = posts.filter(
     (post) =>
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -197,7 +214,6 @@ function App() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Header */}
       <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex justify-between items-center h-16 px-4">
           <div className="flex items-center space-x-2">
@@ -211,7 +227,6 @@ function App() {
         </div>
       </nav>
 
-      {/* Search */}
       <div className="pt-16 pb-8 max-w-4xl mx-auto px-4">
         <h1 className="text-4xl font-bold text-center mb-4">
           Discover Engineering Excellence
@@ -227,43 +242,44 @@ function App() {
         </div>
       </div>
 
-      {/* Posts */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4 pb-16">
-        {filteredPosts.map((post) => (
-          <motion.article
-            key={post.id}
-            whileHover={{ scale: 1.02 }}
-            className={`${post.brandColor} flex flex-col rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer`}
-            onClick={() => handlePostClick(post)}
-          >
-            <img
-              src={post.imageUrl}
-              alt={post.title}
-              className="h-48 w-full object-cover"
-            />
-            <div className="flex flex-col flex-1 p-6">
-              <h3 className="font-semibold text-lg mb-1">{post.title}</h3>
-              <p className="text-sm text-gray-600 mb-2">{post.company}</p>
-              <p className="flex-1 text-gray-700 line-clamp-3">
-                {post.summary}
-              </p>
-              <div className="flex justify-between mt-4 pt-4 border-t">
-                <div className="flex items-center space-x-1 text-indigo-600">
-                  <ThumbsUp className="h-5 w-5" />
-                  <span>{post.recommendations}</span>
+        {loading
+          ? renderSkeleton(6)
+          : filteredPosts.map((post) => (
+              <motion.article
+                key={post.id}
+                whileHover={{ scale: 1.02 }}
+                className={`${post.brandColor} flex flex-col rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer`}
+                onClick={() => handlePostClick(post)}
+              >
+                <img
+                  src={post.imageUrl}
+                  alt={post.title}
+                  className="h-48 w-full object-cover"
+                />
+                <div className="flex flex-col flex-1 p-6">
+                  <h3 className="font-semibold text-lg mb-1">{post.title}</h3>
+                  <p className="text-sm text-gray-600 mb-2">{post.company}</p>
+                  <p className="flex-1 text-gray-700 line-clamp-3">
+                    {post.summary}
+                  </p>
+                  <div className="flex justify-between mt-4 pt-4 border-t">
+                    <div className="flex items-center space-x-1 text-indigo-600">
+                      <ThumbsUp className="h-5 w-5" />
+                      <span>{post.recommendations}</span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-gray-600">
+                      <Eye className="h-5 w-5" />
+                      <span>{post.views}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1 text-gray-600">
-                  <Eye className="h-5 w-5" />
-                  <span>{post.views}</span>
-                </div>
-              </div>
-            </div>
-          </motion.article>
-        ))}
+              </motion.article>
+            ))}
+        {loadingMore && renderSkeleton(3)}
         <div ref={observerRef} className="h-1"></div>
       </div>
 
-      {/* Modal */}
       <AnimatePresence>
         {selectedPost && (
           <motion.div
@@ -314,7 +330,7 @@ function App() {
                     className="flex items-center space-x-1 text-indigo-600"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (selectedPost.id) handleRecommend(selectedPost.id);
+                      handleRecommend(selectedPost.id);
                     }}
                   >
                     <ThumbsUp className="h-5 w-5" />
@@ -331,7 +347,6 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* ScrollTop */}
       {showScrollTop && (
         <button
           onClick={handleScrollToTop}
