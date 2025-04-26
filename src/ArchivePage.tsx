@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, BookMarked, ThumbsUp, Eye, PlusCircle, ArrowUp } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 
 interface BlogPost {
-  id?: number;
+  id: number;
   title: string;
   company?: string;
   summary?: string;
@@ -16,7 +16,6 @@ interface BlogPost {
   content?: string;
   url?: string;
   blogType?: string;
-  thumbnail?: string;
 }
 
 function App() {
@@ -31,6 +30,9 @@ function App() {
   const [deviceId, setDeviceId] = useState<string>('');
   const observerRef = useRef<HTMLDivElement | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   useEffect(() => {
     const storedDeviceId = localStorage.getItem('deviceId');
@@ -58,14 +60,11 @@ function App() {
       else setLoadingMore(true);
 
       const response = await fetch(`http://localhost:8080/api/posters?page=${currentPage}&size=${size}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
       const data = await response.json();
-
-      const transformedPosts = data.map((post: any, index: number) => ({
-        id: index + 1 + currentPage * size,
+      const transformedPosts = data.map((post: any) => ({
+        id: post.id,
         title: post.title,
         company: post.blogType || 'Unknown Company',
         summary: post.content ? post.content.substring(0, 150) + '...' : 'No summary available',
@@ -79,9 +78,7 @@ function App() {
         blogType: post.blogType
       }));
 
-      if (data.length < size) {
-        setHasMore(false);
-      }
+      if (data.length < size) setHasMore(false);
 
       setPosts(prev => [...prev, ...transformedPosts]);
       setError(null);
@@ -103,9 +100,7 @@ function App() {
       if (entry.isIntersecting) {
         const nextPage = page + 1;
         const success = await fetchPosts(nextPage);
-        if (success) {
-          setPage(nextPage);
-        }
+        if (success) setPage(nextPage);
       }
     }, { threshold: 1.0 });
 
@@ -118,13 +113,8 @@ function App() {
 
   useEffect(() => {
     const handleShowScrollTop = () => {
-      if (window.scrollY > 300) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
+      setShowScrollTop(window.scrollY > 300);
     };
-
     window.addEventListener('scroll', handleShowScrollTop);
     return () => window.removeEventListener('scroll', handleShowScrollTop);
   }, []);
@@ -133,8 +123,48 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleRetry = () => {
-    fetchPosts(page);
+  const handlePostClick = (post: BlogPost) => {
+    setScrollPosition(window.scrollY);
+    setSelectedPost(post);
+
+    if (post.id) {
+      fetch(`http://localhost:8080/api/posters/${post.id}/view`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Device-Id': deviceId
+        }
+      }).catch((err) => {
+        console.error('Failed to increment view count', err);
+      });
+    }
+  };
+
+  const handleRecommend = async (postId: number) => {
+    try {
+      await fetch(`http://localhost:8080/api/posters/${postId}/recommend`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Device-Id': deviceId
+        }
+      });
+
+      if (selectedPost && selectedPost.id === postId) {
+        setSelectedPost({
+          ...selectedPost,
+          recommendations: (selectedPost.recommendations || 0) + 1
+        });
+      }
+
+      setPosts(prevPosts => prevPosts.map(post =>
+        post.id === postId
+          ? { ...post, recommendations: (post.recommendations || 0) + 1 }
+          : post
+      ));
+    } catch (err) {
+      console.error('Failed to recommend', err);
+    }
   };
 
   const getRandomBrandColor = () => {
@@ -142,11 +172,10 @@ function App() {
     return colors[Math.floor(Math.random() * colors.length)];
   };
 
-  const filteredPosts = posts.filter(post => 
+  const filteredPosts = posts.filter(post =>
     post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (post.company && post.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (post.summary && post.summary.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (post.tags && post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
+    (post.summary && post.summary.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -165,96 +194,125 @@ function App() {
         </div>
       </nav>
 
-      {/* Search Bar */}
+      {/* Search */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
-        <h1 className="text-4xl font-bold text-center text-gray-900 mb-4">Discover Engineering Excellence</h1>
-        <p className="text-center text-gray-600 mb-8">Explore the best engineering blogs from top tech companies</p>
+        <h1 className="text-4xl font-bold text-center mb-4">Discover Engineering Excellence</h1>
         <div className="relative max-w-2xl mx-auto">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
             placeholder="Search by topic (e.g., Redis, Docker, Architecture)"
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white/80 backdrop-blur-sm"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 bg-white/80 backdrop-blur-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
 
-      {/* Blog Posts */}
+      {/* Posts Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        {loading && posts.length === 0 ? (
+        {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-pulse rounded-xl bg-gray-200 h-48 w-full" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center space-y-4">
-            <div className="bg-red-50 text-red-700 p-4 rounded-lg text-center">{error}</div>
-            <button onClick={handleRetry} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-              Retry Loading
-            </button>
-          </div>
-        ) : filteredPosts.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">No posts found matching your search.</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPosts.map((post) => (
+            {filteredPosts.map(post => (
               <motion.article
-              key={post.id}
-              whileHover={{ scale: 1.02 }}  // ✅ 확대 효과 추가
-              className={`${post.brandColor || 'bg-white'} rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 backdrop-blur-sm bg-opacity-80 cursor-pointer relative`}
-              onClick={() => {
-                if (post.url) {
-                  window.open(post.url, '_blank');  // ✅ 클릭하면 새 창에서 post.url 열기
-                }
-              }}
-            >
-              {/* ✅ 오버레이 추가 */}
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-            
-              <img
-                src={post.imageUrl}
-                alt={post.title}
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-6 flex flex-col h-full">
-                <div className="flex-grow">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{post.title}</h3>
+                key={post.id}
+                whileHover={{ scale: 1.02 }}
+                className={`${post.brandColor} rounded-xl overflow-hidden shadow-md hover:shadow-xl cursor-pointer relative transition-all`}
+                onClick={() => handlePostClick(post)}
+              >
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                <img src={post.imageUrl} alt={post.title} className="w-full h-48 object-cover" />
+                <div className="p-6 flex flex-col">
+                  <h3 className="text-lg font-semibold">{post.title}</h3>
                   <p className="text-sm text-gray-600 mb-2">{post.company}</p>
-                  <p className="text-gray-700 mb-4 line-clamp-3">{post.summary}</p>
-                </div>
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                  <div className="flex items-center space-x-1 bg-indigo-50 px-4 py-2 rounded-lg shadow-sm">
-                    <ThumbsUp className="h-5 w-5 text-indigo-600" />
-                    <span className="font-semibold text-indigo-700">{post.recommendations || 0}</span>
+                  <p className="text-gray-700 line-clamp-3">{post.summary}</p>
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex items-center space-x-1 bg-indigo-50 px-4 py-2 rounded-lg shadow-sm">
+                      <ThumbsUp className="h-5 w-5 text-indigo-600" />
+                      <span className="font-semibold">{post.recommendations}</span>
+                    </div>
+                    <div className="flex items-center space-x-1 bg-gray-50 px-4 py-2 rounded-lg shadow-sm">
+                      <Eye className="h-5 w-5 text-gray-600" />
+                      <span className="font-semibold">{post.views}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-1 bg-gray-50 px-4 py-2 rounded-lg shadow-sm">
-                    <Eye className="h-5 w-5 text-gray-600" />
-                    <span className="font-semibold text-gray-700">{post.views || 0}</span>
-                  </div>
                 </div>
-              </div>
-            </motion.article>
+              </motion.article>
             ))}
           </div>
         )}
-        {loadingMore && (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-          </div>
-        )}
-        {!hasMore && (
-          <div className="text-center text-gray-500 mt-8">No more posts to load.</div>
-        )}
-        <div ref={observerRef} className="h-1"></div>
       </div>
 
+      {/* Modal */}
+<AnimatePresence>
+  {selectedPost && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={() => {
+        setSelectedPost(null);
+        requestAnimationFrame(() => window.scrollTo(0, scrollPosition));
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.9 }}
+        animate={{ scale: 1 }}
+        exit={{ scale: 0.9 }}
+        className="bg-white rounded-xl overflow-hidden shadow-xl max-w-4xl w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img src={selectedPost.imageUrl} alt={selectedPost.title} className="w-full h-80 object-cover" />
+        <div className="p-8">
+          <h1 className="text-3xl font-bold mb-4">{selectedPost.title}</h1>
+          <div className="text-gray-700 whitespace-pre-wrap">{selectedPost.content}</div>
+
+          {/* 👉 원문 링크 버튼 추가 */}
+          {selectedPost.url && (
+            <div className="mt-8 flex justify-center">
+              <a
+                href={selectedPost.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-6 py-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors text-lg font-semibold"
+              >
+                원문 보기 🔗
+              </a>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
+            <button
+              className="flex items-center space-x-1 text-indigo-600"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (selectedPost.id) handleRecommend(selectedPost.id);
+              }}
+            >
+              <ThumbsUp className="h-5 w-5" />
+              <span>{selectedPost.recommendations}</span>
+            </button>
+            <div className="flex items-center space-x-1 text-gray-600">
+              <Eye className="h-5 w-5" />
+              <span>{selectedPost.views}</span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+      {/* ScrollTop */}
       {showScrollTop && (
         <button
           onClick={handleScrollToTop}
-          className="fixed bottom-8 right-8 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
+          className="fixed bottom-8 right-8 bg-indigo-600 text-white p-3 rounded-full hover:bg-indigo-700 shadow-lg"
         >
           <ArrowUp className="h-5 w-5" />
         </button>
