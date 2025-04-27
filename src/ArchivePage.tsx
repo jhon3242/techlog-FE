@@ -200,14 +200,16 @@ function App() {
       </div>
     ));
 
-  const filteredPosts = posts.filter(
-    (post) =>
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (post.company &&
-        post.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (post.summary &&
-        post.summary.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredPosts = posts.filter((post) => {
+    const searchWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+    if (searchWords.length === 0) return true;
+
+    return searchWords.every((word) => {
+      const titleMatch = post.title.toLowerCase().includes(word);
+      const summaryMatch = post.summary?.toLowerCase().includes(word) || false;
+      return titleMatch || summaryMatch;
+    });
+  });
 
   const handleScrollToTop = () =>
     window.scrollTo({ top: 0, behavior: "smooth" });
