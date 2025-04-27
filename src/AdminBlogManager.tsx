@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { fetchWithAdminHeader } from './utils/fetchWithAdminHeader';
 import AdminRecommendManager from './AdminRecommendManager';
 
@@ -8,6 +8,7 @@ interface BlogResponse {
   content: string;
   url: string;
   blogType: string;
+  tags?: string[];
 }
 
 const blogTypes = ["WOOWABRO", "NAVER", "TISTORY", "MEDIUM", "BRUNCH"];
@@ -22,6 +23,16 @@ function AdminBlogManager() {
   const [error, setError] = useState<string | null>(null);
 
   const [postedBlogs, setPostedBlogs] = useState<BlogResponse[]>([]);
+  const [recommendedTags, setRecommendedTags] = useState<string[]>([]);
+  const [tagInputs, setTagInputs] = useState<{ [key: number]: string }>({});
+
+  // 태그 목록 불러오기
+  useEffect(() => {
+    fetch('http://localhost:8080/api/tags')
+      .then(res => res.json())
+      .then((tags: {id: number, name: string}[]) => setRecommendedTags(tags.map(t => t.name)))
+      .catch(() => setRecommendedTags([]));
+  }, []);
 
   const handleFetchBlogs = async () => {
     try {
@@ -74,7 +85,8 @@ function AdminBlogManager() {
             thumbnail: blog.thumbnail,
             content: blog.content,
             url: blog.url,
-            blogType: blog.blogType
+            blogType: blog.blogType,
+            tags: blog.tags
           }))
         })
       });
@@ -97,6 +109,42 @@ function AdminBlogManager() {
     const updatedBlogs = [...blogs];
     (updatedBlogs[index] as any)[field] = value;
     setBlogs(updatedBlogs);
+  };
+
+  const handleTagAdd = async (index: number, tag: string) => {
+    setBlogs(prev => {
+      const updated = [...prev];
+      const tags = new Set([...(updated[index].tags || [])]);
+      if (!tags.has(tag)) {
+        tags.add(tag);
+        updated[index].tags = Array.from(tags);
+      }
+      return updated;
+    });
+    if (!recommendedTags.includes(tag)) {
+      try {
+        const res = await fetchWithAdminHeader('http://localhost:8080/api/tag', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: tag })
+        });
+        if (res.ok) {
+          setRecommendedTags(prev => [...prev, tag]);
+        }
+      } catch {}
+    }
+  };
+
+  const handleTagRemove = (index: number, tag: string) => {
+    setBlogs(prev => {
+      const updated = [...prev];
+      updated[index].tags = (updated[index].tags || []).filter(t => t !== tag);
+      return updated;
+    });
+  };
+
+  const handleTagInput = (index: number, value: string) => {
+    setTagInputs(prev => ({ ...prev, [index]: value }));
   };
 
   return (
@@ -218,6 +266,46 @@ function AdminBlogManager() {
                           <option key={type} value={type}>{type}</option>
                         ))}
                       </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="font-semibold">Tags</label>
+                      <div className="flex flex-wrap gap-2 mb-2 mt-1">
+                        {(blog.tags || []).map((tag, i) => (
+                          <span key={i} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                            {tag}
+                            <button type="button" className="ml-1 text-gray-500 hover:text-red-500" onClick={() => handleTagRemove(index, tag)}>
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      <input
+                        type="text"
+                        className="border p-2 rounded-lg w-full mb-2"
+                        placeholder="태그 입력 후 Enter로 추가"
+                        value={tagInputs[index] || ""}
+                        onChange={e => handleTagInput(index, e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter" && !(e.nativeEvent as any).isComposing) {
+                            e.preventDefault();
+                            const tag = (tagInputs[index] || "").trim();
+                            setTagInputs(prev => ({ ...prev, [index]: "" }));
+                            if (tag) handleTagAdd(index, tag);
+                          }
+                        }}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        {recommendedTags.map(tag => (
+                          <button
+                            key={tag}
+                            type="button"
+                            className={`px-3 py-1 rounded-full text-sm border ${blog.tags?.includes(tag) ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-indigo-50'}`}
+                            onClick={() => blog.tags?.includes(tag) ? handleTagRemove(index, tag) : handleTagAdd(index, tag)}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
