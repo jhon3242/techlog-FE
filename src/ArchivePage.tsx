@@ -80,7 +80,7 @@ function App() {
         imageUrl:
           post.thumbnail ||
           "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=500",
-        tags: [],
+        tags: post.tags || [],
         recommendations: post.recommendations || 0,
         views: post.views || 0,
         brandColor: getRandomBrandColor(),
@@ -149,6 +149,8 @@ function App() {
   };
 
   const handleRecommend = async (postId: number) => {
+    const recommendedKey = `recommended_${postId}`;
+    if (localStorage.getItem(recommendedKey)) return;
     try {
       await fetch(`http://localhost:8080/api/posters/${postId}/recommend`, {
         method: "PUT",
@@ -170,6 +172,7 @@ function App() {
           recommendations: (selectedPost.recommendations || 0) + 1,
         });
       }
+      localStorage.setItem(recommendedKey, '1');
     } catch (e) {
       console.error("Failed to recommend", e);
     }
@@ -265,14 +268,33 @@ function App() {
                   <p className="flex-1 text-gray-700 line-clamp-3">
                     {post.summary}
                   </p>
-                  <div className="flex justify-between mt-4 pt-4 border-t">
-                    <div className="flex items-center space-x-1 text-indigo-600">
-                      <ThumbsUp className="h-5 w-5" />
-                      <span>{post.recommendations}</span>
+                  <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                    <div className="flex flex-wrap gap-2">
+                      {(post.tags && post.tags.length > 0 ? post.tags : []).map((tag, idx) => (
+                        <span key={idx} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                          {tag}
+                        </span>
+                      ))}
                     </div>
-                    <div className="flex items-center space-x-1 text-gray-600">
-                      <Eye className="h-5 w-5" />
-                      <span>{post.views}</span>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-1 text-indigo-600">
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleRecommend(post.id);
+                          }}
+                          disabled={!!localStorage.getItem(`recommended_${post.id}`)}
+                          className="focus:outline-none disabled:opacity-50 transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer"
+                          aria-label="추천하기"
+                        >
+                          <ThumbsUp className="h-5 w-5" />
+                        </button>
+                        <span>{post.recommendations}</span>
+                      </div>
+                      <div className="flex items-center space-x-1 text-gray-600">
+                        <Eye className="h-5 w-5" />
+                        <span>{post.views}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -328,16 +350,20 @@ function App() {
                   </div>
                 )}
                 <div className="flex justify-between mt-8 pt-6 border-t">
-                  <button
-                    className="flex items-center space-x-1 text-indigo-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRecommend(selectedPost.id);
-                    }}
-                  >
-                    <ThumbsUp className="h-5 w-5" />
+                  <div className="flex items-center space-x-1 text-indigo-600">
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleRecommend(selectedPost.id);
+                      }}
+                      disabled={!!localStorage.getItem(`recommended_${selectedPost.id}`)}
+                      className="focus:outline-none disabled:opacity-50 transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer"
+                      aria-label="추천하기"
+                    >
+                      <ThumbsUp className="h-5 w-5" />
+                    </button>
                     <span>{selectedPost.recommendations}</span>
-                  </button>
+                  </div>
                   <div className="flex items-center space-x-1 text-gray-600">
                     <Eye className="h-5 w-5" />
                     <span>{selectedPost.views}</span>
