@@ -11,7 +11,14 @@ interface BlogResponse {
   tags?: string[];
 }
 
-const blogTypes = ["WOOWABRO", "NAVER", "TISTORY", "MEDIUM", "BRUNCH"];
+const blogTypes = [
+  { value: "WOOWABRO", label: "우아한형제들" },
+  { value: "NAVER", label: "네이버" },
+  { value: "LINE", label: "라인" },
+  { value: "KAKAO_PAY", label: "카카오페이" },
+  { value: "KAKAO", label: "카카오" },
+  { value: "COUPANG", label: "쿠팡" }
+];
 
 function AdminBlogManager() {
   const [activeTab, setActiveTab] = useState<'blogs' | 'recommendations'>('blogs');
@@ -280,10 +287,10 @@ function AdminBlogManager() {
                   onChange={(e) => setSelectedBlogType(e.target.value)}
                   className="border p-2 rounded-lg"
                 >
-                  <option value="">All Blogs</option>
+                  <option value="">전체 블로그</option>
                   {blogTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
+                    <option key={type.value} value={type.value}>
+                      {type.label}
                     </option>
                   ))}
                 </select>
@@ -447,7 +454,7 @@ function AdminBlogManager() {
                         onChange={(e) => handleChange(index, 'blogType', e.target.value)}
                       >
                         {blogTypes.map(type => (
-                          <option key={type} value={type}>{type}</option>
+                          <option key={type.value} value={type.value}>{type.label}</option>
                         ))}
                       </select>
                     </div>

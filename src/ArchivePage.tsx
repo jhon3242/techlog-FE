@@ -291,8 +291,13 @@ function App() {
               onChange={(e) => setSelectedBlogType(e.target.value)}
               className="py-3 px-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="">All Blogs</option>
-              {/* Add blog types here */}
+              <option value="">전체 블로그</option>
+              <option value="WOOWABRO">우아한형제들</option>
+              <option value="NAVER">네이버</option>
+              <option value="LINE">라인</option>
+              <option value="KAKAO_PAY">카카오페이</option>
+              <option value="KAKAO">카카오</option>
+              <option value="COUPANG">쿠팡</option>
             </select>
             <button
               onClick={handleSearch}
