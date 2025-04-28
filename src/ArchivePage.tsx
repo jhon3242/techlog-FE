@@ -195,19 +195,19 @@ function App() {
   const getBrandColor = (blogType: string) => {
     switch (blogType) {
       case 'WOOWABRO':
-        return 'bg-[#40E0D0]/30 hover:bg-[#40E0D0]/40';
+        return 'border-l-4 border-[#40E0D0] hover:bg-[#40E0D0]/5';
       case 'NAVER':
-        return 'bg-[#03C75A]/30 hover:bg-[#03C75A]/40';
+        return 'border-l-4 border-[#03C75A] hover:bg-[#03C75A]/5';
       case 'LINE':
-        return 'bg-[#00C300]/30 hover:bg-[#00C300]/40';
+        return 'border-l-4 border-[#00C300] hover:bg-[#00C300]/5';
       case 'KAKAO_PAY':
-        return 'bg-[#FFCC00]/30 hover:bg-[#FFCC00]/40';
+        return 'border-l-4 border-[#FFCC00] hover:bg-[#FFCC00]/5';
       case 'KAKAO':
-        return 'bg-[#FFCD00]/30 hover:bg-[#FFCD00]/40';
+        return 'border-l-4 border-[#FFCD00] hover:bg-[#FFCD00]/5';
       case 'COUPANG':
-        return 'bg-[#0078FF]/30 hover:bg-[#0078FF]/40';
+        return 'border-l-4 border-[#0078FF] hover:bg-[#0078FF]/5';
       default:
-        return 'bg-gray-100 hover:bg-gray-200';
+        return 'border-l-4 border-gray-200 hover:bg-gray-50';
     }
   };
 
@@ -358,7 +358,7 @@ function App() {
               <motion.article
                 key={post.id}
                 whileHover={{ scale: 1.02 }}
-                className={`${getBrandColor(post.blogType || '')} flex flex-col rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer`}
+                className={`${getBrandColor(post.blogType || '')} flex flex-col rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer bg-white`}
                 onClick={() => handlePostClick(post)}
               >
                 <div className="relative">
