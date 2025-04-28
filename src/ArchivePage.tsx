@@ -195,19 +195,19 @@ function App() {
   const getBrandColor = (blogType: string) => {
     switch (blogType) {
       case 'WOOWABRO':
-        return 'bg-white border-t-4 border-[#40E0D0] hover:shadow-[0_4px_12px_rgba(64,224,208,0.15)]';
+        return '#40E0D0';
       case 'NAVER':
-        return 'bg-white border-t-4 border-[#03C75A] hover:shadow-[0_4px_12px_rgba(3,199,90,0.15)]';
+        return '#03C75A';
       case 'LINE':
-        return 'bg-white border-t-4 border-[#00C300] hover:shadow-[0_4px_12px_rgba(0,195,0,0.15)]';
+        return '#00C300';
       case 'KAKAO_PAY':
-        return 'bg-white border-t-4 border-[#FFCC00] hover:shadow-[0_4px_12px_rgba(255,204,0,0.15)]';
+        return '#FFCC00';
       case 'KAKAO':
-        return 'bg-white border-t-4 border-[#FFCD00] hover:shadow-[0_4px_12px_rgba(255,205,0,0.15)]';
+        return '#FFCD00';
       case 'COUPANG':
-        return 'bg-white border-t-4 border-[#0078FF] hover:shadow-[0_4px_12px_rgba(0,120,255,0.15)]';
+        return '#0078FF';
       default:
-        return 'bg-white border-t-4 border-gray-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)]';
+        return '#E5E7EB';
     }
   };
 
@@ -362,7 +362,7 @@ function App() {
               <motion.article
                 key={post.id}
                 whileHover={{ scale: 1.02 }}
-                className={`${getBrandColor(post.blogType || '')} flex flex-col rounded-xl overflow-hidden shadow-md transition-all cursor-pointer`}
+                className="flex flex-col rounded-xl overflow-hidden shadow-md transition-all cursor-pointer bg-white hover:shadow-lg"
                 onClick={() => handlePostClick(post)}
               >
                 <div className="relative">
@@ -381,6 +381,12 @@ function App() {
                     </div>
                   )}
                 </div>
+                <div 
+                  className="h-2"
+                  style={{
+                    background: `linear-gradient(to bottom, ${getBrandColor(post.blogType || '')}, transparent)`
+                  }}
+                ></div>
                 <div className="flex flex-col flex-1 p-6">
                   <h3 className="font-semibold text-lg mb-1">{post.title}</h3>
                   <p className="text-sm text-gray-600 mb-2">{post.company}</p>
