@@ -26,6 +26,14 @@ function AdminBlogManager() {
   const [recommendedTags, setRecommendedTags] = useState<string[]>([]);
   const [tagInputs, setTagInputs] = useState<{ [key: number]: string }>({});
 
+  const [page, setPage] = useState(0);
+  const size = 10;
+  const [allPosts, setAllPosts] = useState<any[]>([]);
+  const [hasNext, setHasNext] = useState(true);
+  const [postSearch, setPostSearch] = useState('');
+  const [selectedBlogType, setSelectedBlogType] = useState<string>("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
   // 태그 목록 불러오기
   useEffect(() => {
     fetch('http://localhost:8080/api/tags')
@@ -33,6 +41,77 @@ function AdminBlogManager() {
       .then((tags: {id: number, name: string}[]) => setRecommendedTags(tags.map(t => t.name)))
       .catch(() => setRecommendedTags([]));
   }, []);
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  const handleSearch = () => {
+    setPage(0);
+    fetchPosts(0);
+  };
+
+  // 검색 조건이 모두 비어있을 때 자동으로 전체 조회
+  useEffect(() => {
+    if (!postSearch.trim() && !selectedBlogType && selectedTags.length === 0) {
+      handleSearch();
+    }
+  }, [postSearch, selectedBlogType, selectedTags]);
+
+  // 등록된 포스트 목록 불러오기 (페이지네이션)
+  const fetchPosts = async (currentPage: number) => {
+    try {
+      let url = `http://localhost:8080/api/posters?page=${currentPage}&size=${size}`;
+      if (postSearch.trim() || selectedBlogType || selectedTags.length > 0) {
+        const params = new URLSearchParams();
+        if (postSearch.trim()) {
+          params.append('keyword', postSearch.trim());
+        }
+        if (selectedBlogType) {
+          params.append('blogType', selectedBlogType);
+        }
+        selectedTags.forEach(tag => {
+          params.append('tags', tag);
+        });
+        url = `http://localhost:8080/api/search?${params.toString()}`;
+      }
+
+      const response = await fetchWithAdminHeader(url);
+      if (!response.ok) throw new Error();
+      
+      const data = await response.json();
+      setAllPosts(data);
+      setHasNext(data.length === size);
+    } catch {
+      setAllPosts([]);
+      setHasNext(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'blogs') {
+      fetchPosts(page);
+    }
+  }, [activeTab, page]);
+
+  const handleDeletePost = async (id: number) => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+    await fetchWithAdminHeader(`http://localhost:8080/api/posters/${id}`, { method: 'DELETE' });
+    setAllPosts(posts => posts.filter(p => p.id !== id));
+  };
+
+  // 페이지네이션 버튼 생성 (최근 5페이지만)
+  const pageButtons = [];
+  const startPage = Math.max(0, page - 2);
+  for (let i = startPage; i <= page + 2; i++) {
+    if (i === page || (i < page && i >= 0) || (i > page && (i === page + 1 && hasNext))) {
+      pageButtons.push(i);
+    }
+  }
 
   const handleFetchBlogs = async () => {
     try {
@@ -177,6 +256,108 @@ function AdminBlogManager() {
 
       {activeTab === 'blogs' ? (
         <>
+          {/* 등록된 포스트 관리 테이블 */}
+          <div className="mb-8">
+            <div className="flex flex-col gap-4 mb-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <input
+                  type="text"
+                  className="border p-2 rounded-lg flex-1"
+                  placeholder="포스트 제목 검색"
+                  value={postSearch}
+                  onChange={e => setPostSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                      handleSearch();
+                    }
+                  }}
+                />
+                <select
+                  value={selectedBlogType}
+                  onChange={(e) => setSelectedBlogType(e.target.value)}
+                  className="border p-2 rounded-lg"
+                >
+                  <option value="">All Blogs</option>
+                  {blogTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleSearch}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                >
+                  Search
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {recommendedTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => handleTagToggle(tag)}
+                    className={`px-3 py-1 rounded-full text-sm ${
+                      selectedTags.includes(tag)
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <table className="w-full border text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border p-2">제목</th>
+                  <th className="border p-2">링크</th>
+                  <th className="border p-2">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allPosts.map(post => (
+                  <tr key={post.id}>
+                    <td className="border p-2">{post.title}</td>
+                    <td className="border p-2 text-blue-600 underline">
+                      <a href={post.url} target="_blank" rel="noopener noreferrer">Link</a>
+                    </td>
+                    <td className="border p-2">
+                      <button
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        onClick={() => handleDeletePost(post.id)}
+                      >
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="flex justify-center mt-4 space-x-2">
+              {page > 0 && (
+                <button className="px-3 py-1 rounded bg-gray-200" onClick={() => setPage(page - 1)}>
+                  이전
+                </button>
+              )}
+              {pageButtons.map(idx => (
+                <button
+                  key={idx}
+                  className={`px-3 py-1 rounded ${page === idx ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
+                  onClick={() => setPage(idx)}
+                  disabled={idx < 0}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+              {hasNext && (
+                <button className="px-3 py-1 rounded bg-gray-200" onClick={() => setPage(page + 1)}>
+                  다음
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* 모드 선택 */}
           <div className="mb-6">
             <label className="mr-4">Mode:</label>

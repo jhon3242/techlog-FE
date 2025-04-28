@@ -27,11 +27,14 @@ interface BlogPost {
 
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBlogType, setSelectedBlogType] = useState<string>("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
   const [deviceId, setDeviceId] = useState<string>("");
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
@@ -51,22 +54,58 @@ function App() {
   }, []);
 
   useEffect(() => {
-    loadInitialPosts();
+    fetch('http://localhost:8080/api/tags')
+      .then(res => res.json())
+      .then((tags: {id: number, name: string}[]) => setAvailableTags(tags.map(t => t.name)))
+      .catch(() => setAvailableTags([]));
   }, []);
 
-  const loadInitialPosts = async () => {
-    const success = await fetchPosts(0);
-    if (success) setPage(0);
+  useEffect(() => {
+    fetchPosts(0);
+  }, []);
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
   };
+
+  const handleSearch = () => {
+    setPage(0);
+    setHasMore(true);
+    fetchPosts(0);
+  };
+
+  // 검색 조건이 모두 비어있을 때 자동으로 전체 조회
+  useEffect(() => {
+    if (!searchQuery.trim() && !selectedBlogType && selectedTags.length === 0) {
+      handleSearch();
+    }
+  }, [searchQuery, selectedBlogType, selectedTags]);
 
   const fetchPosts = async (currentPage: number): Promise<boolean> => {
     try {
       if (currentPage === 0) setLoading(true);
       else setLoadingMore(true);
 
-      const res = await fetch(
-        `http://localhost:8080/api/posters?page=${currentPage}&size=${size}`
-      );
+      let url = `http://localhost:8080/api/posters?page=${currentPage}&size=${size}`;
+      if (searchQuery.trim() || selectedBlogType || selectedTags.length > 0) {
+        const params = new URLSearchParams();
+        if (searchQuery.trim()) {
+          params.append('keyword', searchQuery.trim());
+        }
+        if (selectedBlogType) {
+          params.append('blogType', selectedBlogType);
+        }
+        selectedTags.forEach(tag => {
+          params.append('tags', tag);
+        });
+        url = `http://localhost:8080/api/search?${params.toString()}`;
+      }
+
+      const res = await fetch(url);
       if (!res.ok) throw new Error();
 
       const data = await res.json();
@@ -79,7 +118,7 @@ function App() {
           : "No summary available",
         imageUrl:
           post.thumbnail ||
-          "/images/no-thumbnail.png",
+          "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=500",
         tags: post.tags || [],
         recommendations: post.recommendations || 0,
         views: post.views || 0,
@@ -94,17 +133,18 @@ function App() {
       } else {
         setPosts((prev) => [...prev, ...transformed]);
       }
-      
       if (data.length < size) setHasMore(false);
       return true;
-    } catch {
-      console.error("Failed to fetch posts");
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      if (currentPage === 0) {
+        setPosts([]);
+      }
       setHasMore(false);
-      setLoadError(true);
       return false;
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (currentPage === 0) setLoading(false);
+      else setLoadingMore(false);
     }
   };
 
@@ -208,17 +248,6 @@ function App() {
       </div>
     ));
 
-  const filteredPosts = posts.filter((post) => {
-    const searchWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
-    if (searchWords.length === 0) return true;
-
-    return searchWords.every((word) => {
-      const titleMatch = post.title.toLowerCase().includes(word);
-      const summaryMatch = post.summary?.toLowerCase().includes(word) || false;
-      return titleMatch || summaryMatch;
-    });
-  });
-
   const handleScrollToTop = () =>
     window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -241,21 +270,59 @@ function App() {
         <h1 className="text-4xl font-bold text-center mb-4">
           Discover Engineering Excellence
         </h1>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by topic"
-            className="w-full py-3 pl-10 pr-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-indigo-500"
-          />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                    handleSearch();
+                  }
+                }}
+                placeholder="Search by topic"
+                className="w-full py-3 pl-10 pr-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <select
+              value={selectedBlogType}
+              onChange={(e) => setSelectedBlogType(e.target.value)}
+              className="py-3 px-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">All Blogs</option>
+              {/* Add blog types here */}
+            </select>
+            <button
+              onClick={handleSearch}
+              className="px-6 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500"
+            >
+              Search
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {availableTags.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => handleTagToggle(tag)}
+                className={`px-3 py-1 rounded-full text-sm ${
+                  selectedTags.includes(tag)
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4 pb-16">
         {loading
           ? renderSkeleton(6)
-          : filteredPosts.map((post) => (
+          : posts.map((post) => (
               <motion.article
                 key={post.id}
                 whileHover={{ scale: 1.02 }}
