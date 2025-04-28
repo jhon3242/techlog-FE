@@ -195,19 +195,19 @@ function App() {
   const getBrandColor = (blogType: string) => {
     switch (blogType) {
       case 'WOOWABRO':
-        return 'border-l-4 border-[#40E0D0] hover:bg-[#40E0D0]/5';
+        return 'bg-white border-t-4 border-[#40E0D0] hover:shadow-[0_4px_12px_rgba(64,224,208,0.15)]';
       case 'NAVER':
-        return 'border-l-4 border-[#03C75A] hover:bg-[#03C75A]/5';
+        return 'bg-white border-t-4 border-[#03C75A] hover:shadow-[0_4px_12px_rgba(3,199,90,0.15)]';
       case 'LINE':
-        return 'border-l-4 border-[#00C300] hover:bg-[#00C300]/5';
+        return 'bg-white border-t-4 border-[#00C300] hover:shadow-[0_4px_12px_rgba(0,195,0,0.15)]';
       case 'KAKAO_PAY':
-        return 'border-l-4 border-[#FFCC00] hover:bg-[#FFCC00]/5';
+        return 'bg-white border-t-4 border-[#FFCC00] hover:shadow-[0_4px_12px_rgba(255,204,0,0.15)]';
       case 'KAKAO':
-        return 'border-l-4 border-[#FFCD00] hover:bg-[#FFCD00]/5';
+        return 'bg-white border-t-4 border-[#FFCD00] hover:shadow-[0_4px_12px_rgba(255,205,0,0.15)]';
       case 'COUPANG':
-        return 'border-l-4 border-[#0078FF] hover:bg-[#0078FF]/5';
+        return 'bg-white border-t-4 border-[#0078FF] hover:shadow-[0_4px_12px_rgba(0,120,255,0.15)]';
       default:
-        return 'border-l-4 border-gray-200 hover:bg-gray-50';
+        return 'bg-white border-t-4 border-gray-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)]';
     }
   };
 
@@ -222,29 +222,33 @@ function App() {
 
   const handleRecommend = async (postId: number) => {
     const recommendedKey = `recommended_${postId}`;
-    if (localStorage.getItem(recommendedKey)) return;
+    const isRecommended = localStorage.getItem(recommendedKey) === '1';
+    
     try {
       await fetch(`http://localhost:8080/api/posters/${postId}/recommend`, {
-        method: "PUT",
+        method: isRecommended ? "DELETE" : "PUT",
         headers: {
           "Content-Type": "application/json",
           "X-Device-Id": deviceId,
         },
       });
+      
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId
-            ? { ...p, recommendations: (p.recommendations || 0) + 1 }
+            ? { ...p, recommendations: (p.recommendations || 0) + (isRecommended ? -1 : 1) }
             : p
         )
       );
+      
       if (selectedPost?.id === postId) {
         setSelectedPost({
           ...selectedPost,
-          recommendations: (selectedPost.recommendations || 0) + 1,
+          recommendations: (selectedPost.recommendations || 0) + (isRecommended ? -1 : 1),
         });
       }
-      localStorage.setItem(recommendedKey, '1');
+      
+      localStorage.setItem(recommendedKey, isRecommended ? '0' : '1');
     } catch (e) {
       console.error("Failed to recommend", e);
     }
@@ -358,7 +362,7 @@ function App() {
               <motion.article
                 key={post.id}
                 whileHover={{ scale: 1.02 }}
-                className={`${getBrandColor(post.blogType || '')} flex flex-col rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer bg-white`}
+                className={`${getBrandColor(post.blogType || '')} flex flex-col rounded-xl overflow-hidden shadow-md transition-all cursor-pointer`}
                 onClick={() => handlePostClick(post)}
               >
                 <div className="relative">
@@ -398,8 +402,9 @@ function App() {
                             e.stopPropagation();
                             handleRecommend(post.id);
                           }}
-                          disabled={!!localStorage.getItem(`recommended_${post.id}`)}
-                          className="focus:outline-none disabled:opacity-50 transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer"
+                          className={`focus:outline-none transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer ${
+                            localStorage.getItem(`recommended_${post.id}`) === '1' ? 'text-indigo-600' : 'text-gray-400'
+                          }`}
                           aria-label="추천하기"
                         >
                           <ThumbsUp className="h-5 w-5" />
@@ -482,8 +487,9 @@ function App() {
                         e.stopPropagation();
                         handleRecommend(selectedPost.id);
                       }}
-                      disabled={!!localStorage.getItem(`recommended_${selectedPost.id}`)}
-                      className="focus:outline-none disabled:opacity-50 transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer"
+                      className={`focus:outline-none transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer ${
+                        localStorage.getItem(`recommended_${selectedPost.id}`) === '1' ? 'text-indigo-600' : 'text-gray-400'
+                      }`}
                       aria-label="추천하기"
                     >
                       <ThumbsUp className="h-5 w-5" />
