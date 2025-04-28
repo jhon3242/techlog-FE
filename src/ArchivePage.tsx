@@ -133,7 +133,9 @@ function App() {
       } else {
         setPosts((prev) => [...prev, ...transformed]);
       }
-      if (data.length < size) setHasMore(false);
+      
+      // 검색 결과가 없거나 size보다 작으면 더 이상 데이터가 없다고 판단
+      setHasMore(data.length === size);
       return true;
     } catch (error) {
       console.error('Error fetching posts:', error);
