@@ -191,24 +191,27 @@ function AdminBlogManager() {
   };
 
   const handleTagAdd = async (index: number, tag: string) => {
+    // Convert English tag to uppercase
+    const processedTag = /^[a-zA-Z]+$/.test(tag) ? tag.toUpperCase() : tag;
+    
     setBlogs(prev => {
       const updated = [...prev];
       const tags = new Set([...(updated[index].tags || [])]);
-      if (!tags.has(tag)) {
-        tags.add(tag);
+      if (!tags.has(processedTag)) {
+        tags.add(processedTag);
         updated[index].tags = Array.from(tags);
       }
       return updated;
     });
-    if (!recommendedTags.includes(tag)) {
+    if (!recommendedTags.includes(processedTag)) {
       try {
         const res = await fetchWithAdminHeader('http://localhost:8080/api/tag', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: tag })
+          body: JSON.stringify({ name: processedTag })
         });
         if (res.ok) {
-          setRecommendedTags(prev => [...prev, tag]);
+          setRecommendedTags(prev => [...prev, processedTag]);
         }
       } catch {}
     }
