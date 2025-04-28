@@ -10,6 +10,24 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
 
+const blogTypeLogos: { [key: string]: string } = {
+  WOOWABRO: "https://i.namu.wiki/i/FyZnY5OkZxDhMDC35TdeeSd0a32S0yvts4LXrY0jpgDNGCWeFhL5CSRS7Yldg4RGlToUPbL_5ZxrZLCXhl-xAQ.webp",
+  NAVER: "https://i.namu.wiki/i/lfkksp4m3ZymQ-3w_dBOe-DAJ8hHkKq2-ULvmbujKyOyx0tsBKOWyNW9gRVMI5fl1T16k6X2H7a22lzi83wZeImS4Mxo-A8bmuORjIEnIumh4p6_p0dU5S-NyUPvlwbRptojQgGA-GCgH5kdOtDr_g.svg",
+  LINE: "https://i.namu.wiki/i/4lZMO-XK7Pdyn7A84kBwZyJW_1PwsF53s8AICTYe6nGHEyKmA1tBoKU1ZEclRYRYqkcjvrdp01xpUTB76HD09yf4x597jKS5l9K8XWMoqPjfEJjee0wd8G5rxZluqyUc1nlh2zp1koxmfa9xAcTLjA.svg",
+  KAKAO_PAY: "https://i.namu.wiki/i/e--EGUzVmBMZ97iEgts-8FmlaWmkHnNyFDdg47f2LYky8CGtudl4QI27F-6oXPpOqqIJTbfPUfJcUKyves2_12OQpPjP3mnpM_zYSNYgqRLHnDiU9CSTXdELMIXGpcrC0OTvfX1xUF3M1x9WTmNQNw.svg",
+  KAKAO: "https://i.namu.wiki/i/icAd1BeTb2rxauXY3zI9xWa2qKTRBFRrgBJQpjqkS8StK3Y4S2d4xGrIWgP82YuC66cJSxBkaUIhaBI8RQ0gqeRC4KFfykoSL6x9dt3SjIJ66svHxMgSzHhbCQsx-vNUF3AjXdVnY4Ld9dXrweKhkg.svg",
+  COUPANG: "https://i.namu.wiki/i/B4-c6bOz5UMSkT2XGouLqwZCLid6bdH94R4v1kBZMBHCTXBFXqWHcoqJ8CNT_TRJHDCFXCp2rHCj_XdnsLcpCmN9qiWOGqXokb-u7k8EAgnCysmkdlnV0ChaZt7UVjNk-z3WAFHDDmy700YiklzXVw.svg"
+};
+
+const blogTypeColors: { [key: string]: string } = {
+  WOOWABRO: "bg-[#03C75A]",
+  NAVER: "bg-[#03C75A]",
+  LINE: "bg-[#00B900]",
+  KAKAO_PAY: "bg-[#FFE600]",
+  KAKAO: "bg-[#FFE600]",
+  COUPANG: "bg-[#FF4E50]"
+};
+
 interface BlogPost {
   id: number;
   title: string;
@@ -343,11 +361,22 @@ function App() {
                 className={`${getBrandColor(post.blogType || '')} flex flex-col rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer`}
                 onClick={() => handlePostClick(post)}
               >
-                <img
-                  src={post.imageUrl}
-                  alt={post.title}
-                  className="h-48 w-full object-cover"
-                />
+                <div className="relative">
+                  <img
+                    src={post.imageUrl}
+                    alt={post.title}
+                    className="h-48 w-full object-cover"
+                  />
+                  {post.blogType && blogTypeLogos[post.blogType] && (
+                    <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg shadow-sm transition-transform duration-200 hover:scale-110">
+                      <img 
+                        src={blogTypeLogos[post.blogType]} 
+                        alt={`${post.blogType} logo`}
+                        className="w-6 h-6 object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-col flex-1 p-6">
                   <h3 className="font-semibold text-lg mb-1">{post.title}</h3>
                   <p className="text-sm text-gray-600 mb-2">{post.company}</p>
@@ -410,11 +439,22 @@ function App() {
               onClick={(e) => e.stopPropagation()}
             >
               {selectedPost.imageUrl && (
-                <img
-                  src={selectedPost.imageUrl}
-                  alt={selectedPost.title}
-                  className="h-80 w-full object-cover"
-                />
+                <div className="relative">
+                  <img
+                    src={selectedPost.imageUrl}
+                    alt={selectedPost.title}
+                    className="h-80 w-full object-cover"
+                  />
+                  {selectedPost.blogType && blogTypeLogos[selectedPost.blogType] && (
+                    <div className="absolute top-4 right-4 p-2 bg-white/90 rounded-lg shadow-sm transition-transform duration-200 hover:scale-110">
+                      <img 
+                        src={blogTypeLogos[selectedPost.blogType]} 
+                        alt={`${selectedPost.blogType} logo`}
+                        className="w-8 h-8 object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
               )}
               <div className="p-8">
                 <h1 className="text-3xl font-bold mb-4">
