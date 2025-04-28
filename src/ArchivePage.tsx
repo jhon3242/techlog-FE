@@ -122,7 +122,7 @@ function App() {
         tags: post.tags || [],
         recommendations: post.recommendations || 0,
         views: post.views || 0,
-        brandColor: getRandomBrandColor(),
+        brandColor: getBrandColor(post.blogType || ''),
         content: post.content,
         url: post.url,
         blogType: post.blogType,
@@ -174,16 +174,23 @@ function App() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const getRandomBrandColor = () => {
-    const colors = [
-      "bg-red-50",
-      "bg-green-50",
-      "bg-blue-50",
-      "bg-yellow-50",
-      "bg-purple-50",
-      "bg-pink-50",
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
+  const getBrandColor = (blogType: string) => {
+    switch (blogType) {
+      case 'WOOWABRO':
+        return 'bg-[#40E0D0]/30 hover:bg-[#40E0D0]/40';
+      case 'NAVER':
+        return 'bg-[#03C75A]/30 hover:bg-[#03C75A]/40';
+      case 'LINE':
+        return 'bg-[#00C300]/30 hover:bg-[#00C300]/40';
+      case 'KAKAO_PAY':
+        return 'bg-[#FFCC00]/30 hover:bg-[#FFCC00]/40';
+      case 'KAKAO':
+        return 'bg-[#FFCD00]/30 hover:bg-[#FFCD00]/40';
+      case 'COUPANG':
+        return 'bg-[#0078FF]/30 hover:bg-[#0078FF]/40';
+      default:
+        return 'bg-gray-100 hover:bg-gray-200';
+    }
   };
 
   const handlePostClick = (post: BlogPost) => {
@@ -333,7 +340,7 @@ function App() {
               <motion.article
                 key={post.id}
                 whileHover={{ scale: 1.02 }}
-                className={`${post.brandColor} flex flex-col rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer`}
+                className={`${getBrandColor(post.blogType || '')} flex flex-col rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer`}
                 onClick={() => handlePostClick(post)}
               >
                 <img
