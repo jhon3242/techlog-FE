@@ -24,7 +24,7 @@ const blogTypes = [
 
 function AdminBlogManager() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'blogs' | 'recommendations'>('blogs');
+  const [activeTab, setActiveTab] = useState<'blogs' | 'recommendations' | 'tags'>('blogs');
   const [mode, setMode] = useState<'single' | 'multi'>('single');
   const [urlInput, setUrlInput] = useState('');
   const [urls, setUrls] = useState<string[]>([]);
@@ -43,6 +43,7 @@ function AdminBlogManager() {
   const [postSearch, setPostSearch] = useState('');
   const [selectedBlogType, setSelectedBlogType] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
 
   // 태그 목록 불러오기
   useEffect(() => {
@@ -239,6 +240,49 @@ function AdminBlogManager() {
     setTagInputs(prev => ({ ...prev, [index]: value }));
   };
 
+  // 태그 삭제 함수 추가
+  const handleDeleteTag = async (tag: string) => {
+    if (!window.confirm('정말 이 태그를 삭제하시겠습니까?')) return;
+    try {
+      const response = await fetchWithAdminHeader('http://localhost:8080/api/tag', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: tag })
+      });
+      if (response.ok) {
+        setRecommendedTags(prev => prev.filter(t => t !== tag));
+        // 모든 블로그에서도 해당 태그 제거
+        setBlogs(prev => prev.map(blog => ({
+          ...blog,
+          tags: blog.tags?.filter(t => t !== tag) || []
+        })));
+      }
+    } catch (error) {
+      console.error('Failed to delete tag:', error);
+    }
+  };
+
+  // 새 태그 추가 함수
+  const handleAddTag = async () => {
+    if (!newTag.trim()) return;
+    const processedTag = /^[a-zA-Z]+$/.test(newTag) ? newTag.toUpperCase() : newTag;
+    
+    try {
+      const response = await fetchWithAdminHeader('http://localhost:8080/api/tag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: processedTag })
+      });
+      
+      if (response.ok) {
+        setRecommendedTags(prev => [...prev, processedTag]);
+        setNewTag('');
+      }
+    } catch (error) {
+      console.error('Failed to add tag:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen relative">
       <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10">
@@ -280,6 +324,16 @@ function AdminBlogManager() {
               }`}
             >
               Recommendations
+            </button>
+            <button
+              onClick={() => setActiveTab('tags')}
+              className={`px-4 py-2 rounded-lg ${
+                activeTab === 'tags'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Tag Management
             </button>
           </div>
         </div>
@@ -558,8 +612,48 @@ function AdminBlogManager() {
               </div>
             )}
           </>
-        ) : (
+        ) : activeTab === 'recommendations' ? (
           <AdminRecommendManager />
+        ) : (
+          <div className="space-y-6">
+            <div className="flex gap-4">
+              <input
+                type="text"
+                className="flex-1 border p-2 rounded-lg"
+                placeholder="새 태그 입력"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                    handleAddTag();
+                  }
+                }}
+              />
+              <button
+                onClick={handleAddTag}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                태그 추가
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recommendedTags.map((tag) => (
+                <div
+                  key={tag}
+                  className="flex items-center justify-between p-4 bg-white rounded-lg shadow"
+                >
+                  <span className="font-medium">{tag}</span>
+                  <button
+                    onClick={() => handleDeleteTag(tag)}
+                    className="p-2 text-red-500 hover:text-red-700"
+                  >
+                    삭제
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>
