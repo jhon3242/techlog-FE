@@ -6,16 +6,18 @@ import {
   Eye,
   PlusCircle,
   ArrowUp,
+  Heart,
+  MessageCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
 
 const blogTypeLogos: { [key: string]: string } = {
-  WOOWABRO: "https://i.namu.wiki/i/FyZnY5OkZxDhMDC35TdeeSd0a32S0yvts4LXrY0jpgDNGCWeFhL5CSRS7Yldg4RGlToUPbL_5ZxrZLCXhl-xAQ.webp",
-  NAVER: "https://i.namu.wiki/i/lfkksp4m3ZymQ-3w_dBOe-DAJ8hHkKq2-ULvmbujKyOyx0tsBKOWyNW9gRVMI5fl1T16k6X2H7a22lzi83wZeImS4Mxo-A8bmuORjIEnIumh4p6_p0dU5S-NyUPvlwbRptojQgGA-GCgH5kdOtDr_g.svg",
+  WOOWABRO: "/images/woowa-icon.png",
+  NAVER: "/images/naver-icon.png",
   LINE: "https://i.namu.wiki/i/4lZMO-XK7Pdyn7A84kBwZyJW_1PwsF53s8AICTYe6nGHEyKmA1tBoKU1ZEclRYRYqkcjvrdp01xpUTB76HD09yf4x597jKS5l9K8XWMoqPjfEJjee0wd8G5rxZluqyUc1nlh2zp1koxmfa9xAcTLjA.svg",
   KAKAO_PAY: "https://i.namu.wiki/i/e--EGUzVmBMZ97iEgts-8FmlaWmkHnNyFDdg47f2LYky8CGtudl4QI27F-6oXPpOqqIJTbfPUfJcUKyves2_12OQpPjP3mnpM_zYSNYgqRLHnDiU9CSTXdELMIXGpcrC0OTvfX1xUF3M1x9WTmNQNw.svg",
-  KAKAO: "https://i.namu.wiki/i/icAd1BeTb2rxauXY3zI9xWa2qKTRBFRrgBJQpjqkS8StK3Y4S2d4xGrIWgP82YuC66cJSxBkaUIhaBI8RQ0gqeRC4KFfykoSL6x9dt3SjIJ66svHxMgSzHhbCQsx-vNUF3AjXdVnY4Ld9dXrweKhkg.svg",
+  KAKAO: "/images/kakao-icon.png",
   COUPANG: "https://i.namu.wiki/i/B4-c6bOz5UMSkT2XGouLqwZCLid6bdH94R4v1kBZMBHCTXBFXqWHcoqJ8CNT_TRJHDCFXCp2rHCj_XdnsLcpCmN9qiWOGqXokb-u7k8EAgnCysmkdlnV0ChaZt7UVjNk-z3WAFHDDmy700YiklzXVw.svg"
 };
 
@@ -214,10 +216,18 @@ function App() {
   const handlePostClick = (post: BlogPost) => {
     setScrollPosition(window.scrollY);
     setSelectedPost(post);
-    fetch(`http://localhost:8080/api/posters/${post.id}/view`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
-    }).catch(console.error);
+    const viewedKey = `viewed_${post.id}`;
+    if (localStorage.getItem(viewedKey) !== '1') {
+      fetch(`http://localhost:8080/api/posters/${post.id}/view`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
+      }).catch(console.error);
+      setPosts(prevPosts => prevPosts.map(p =>
+        p.id === post.id ? { ...p, views: (p.views || 0) + 1 } : p
+      ));
+      setSelectedPost(prev => prev ? { ...prev, views: (prev.views || 0) + 1 } : prev);
+      localStorage.setItem(viewedKey, '1');
+    }
   };
 
   const handleRecommend = async (postId: number) => {
@@ -358,74 +368,102 @@ function App() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4 pb-16">
         {loading
           ? renderSkeleton(6)
-          : posts.map((post) => (
-              <motion.article
-                key={post.id}
-                whileHover={{ scale: 1.02 }}
-                className="flex flex-col rounded-xl overflow-hidden shadow-md transition-all cursor-pointer bg-white hover:shadow-lg"
-                onClick={() => handlePostClick(post)}
-              >
-                <div className="relative">
-                  <img
-                    src={post.imageUrl}
-                    alt={post.title}
-                    className="h-48 w-full object-cover"
-                  />
-                  {post.blogType && blogTypeLogos[post.blogType] && (
-                    <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg shadow-sm transition-transform duration-200 hover:scale-110">
-                      <img 
-                        src={blogTypeLogos[post.blogType]} 
-                        alt={`${post.blogType} logo`}
-                        className="w-6 h-6 object-contain"
-                      />
-                    </div>
-                  )}
-                </div>
-                <div 
-                  className="h-2"
-                  style={{
-                    background: `linear-gradient(to bottom, ${getBrandColor(post.blogType || '')}, transparent)`
-                  }}
-                ></div>
-                <div className="flex flex-col flex-1 p-6">
-                  <h3 className="font-semibold text-lg mb-1">{post.title}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{post.company}</p>
-                  <p className="flex-1 text-gray-700 line-clamp-3">
-                    {post.summary}
-                  </p>
-                  <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                    <div className="flex flex-wrap gap-2">
-                      {(post.tags && post.tags.length > 0 ? post.tags : []).map((tag, idx) => (
-                        <span key={idx} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+          : posts.map((post) => {
+              const blogType = post.blogType || 'UNKNOWN';
+              const meta = blogTypeLogos[blogType] ? {
+                logo: blogTypeLogos[blogType],
+                name: blogType === 'WOOWABRO' ? '우아한형제들' :
+                      blogType === 'NAVER' ? '네이버' :
+                      blogType === 'LINE' ? '라인' :
+                      blogType === 'KAKAO_PAY' ? '카카오페이' :
+                      blogType === 'KAKAO' ? '카카오' :
+                      blogType === 'COUPANG' ? '쿠팡' : blogType,
+                color: blogType === 'WOOWABRO' ? '#40E0D0' :
+                       blogType === 'NAVER' ? '#03C75A' :
+                       blogType === 'LINE' ? '#00C300' :
+                       blogType === 'KAKAO_PAY' ? '#FFCC00' :
+                       blogType === 'KAKAO' ? '#FFCD00' :
+                       blogType === 'COUPANG' ? '#0078FF' : '#888',
+              } : null;
+              const isRecommended = localStorage.getItem(`recommended_${post.id}`) === '1';
+              return (
+                <div
+                  key={post.id}
+                  className="rounded-2xl overflow-hidden shadow bg-white flex flex-col max-w-xl mx-auto border border-gray-100 mb-8 transition hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
+                  onClick={() => handlePostClick(post)}
+                >
+                  {/* 썸네일 */}
+                  <div className="bg-gray-200">
+                    <img src={post.imageUrl} alt={post.title} className="w-full h-64 object-cover" />
+                  </div>
+                  {/* 본문 */}
+                  <div className="p-7 pb-5 flex flex-col flex-1 border-t border-gray-100 bg-[#F5F6FA]">
+                    {/* 키워드(태그) */}
+                    <div className="flex gap-2 mb-4">
+                      {(post.tags || []).map(tag => (
+                        <span
+                          key={tag}
+                          className="px-4 py-1 rounded-full text-sm font-medium bg-[#ede9fe] text-[#6d28d9]"
+                        >
                           {tag}
                         </span>
                       ))}
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-1 text-indigo-600">
+                    {/* 제목 */}
+                    <h3 className="text-2xl font-bold mb-2 text-gray-900">{post.title}</h3>
+                    {/* 본문 */}
+                    <p className="text-gray-600 text-base mb-6 line-clamp-3">{post.summary}</p>
+                    {/* 회사/작성자/추천/조회 */}
+                    <div className="flex items-center justify-between mt-auto">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                          {meta && (
+                            <img
+                              src={meta.logo}
+                              alt={meta.name}
+                              className={
+                                blogType === 'NAVER'
+                                  ? 'w-full h-full object-cover'
+                                  : blogType === 'WOOWABRO'
+                                    ? 'w-8 h-8 object-contain'
+                                    : 'w-7 h-7 object-contain'
+                              }
+                            />
+                          )}
+                        </div>
+                        {meta && (
+                          <span
+                            className="px-4 py-1 rounded-full text-sm font-semibold"
+                            style={{ backgroundColor: meta.color, color: '#fff' }}
+                          >
+                            {meta.name}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-5">
                         <button
                           onClick={e => {
                             e.stopPropagation();
                             handleRecommend(post.id);
                           }}
                           className={`focus:outline-none transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer ${
-                            localStorage.getItem(`recommended_${post.id}`) === '1' ? 'text-indigo-600' : 'text-gray-400'
+                            isRecommended ? 'text-indigo-600' : 'text-gray-400'
                           }`}
                           aria-label="추천하기"
                         >
-                          <ThumbsUp className="h-5 w-5" />
+                          <Heart size={20} />
                         </button>
-                        <span>{post.recommendations}</span>
-                      </div>
-                      <div className="flex items-center space-x-1 text-gray-600">
-                        <Eye className="h-5 w-5" />
-                        <span>{post.views}</span>
+                        <span className="text-base">{post.recommendations}</span>
+                        <div className="flex items-center gap-1 text-gray-700">
+                          <Eye size={20} />
+                          <span className="text-base">{post.views}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </motion.article>
-            ))}
+              );
+            })}
         {loadingMore && renderSkeleton(3)}
         <div ref={observerRef} className="h-1"></div>
       </div>
@@ -458,10 +496,16 @@ function App() {
                   />
                   {selectedPost.blogType && blogTypeLogos[selectedPost.blogType] && (
                     <div className="absolute top-4 right-4 p-2 bg-white/90 rounded-lg shadow-sm transition-transform duration-200 hover:scale-110">
-                      <img 
-                        src={blogTypeLogos[selectedPost.blogType]} 
+                      <img
+                        src={blogTypeLogos[selectedPost.blogType]}
                         alt={`${selectedPost.blogType} logo`}
-                        className="w-8 h-8 object-contain"
+                        className={
+                          selectedPost.blogType === 'NAVER'
+                            ? 'w-8 h-8 object-cover'
+                            : selectedPost.blogType === 'WOOWABRO'
+                              ? 'w-7 h-7 object-contain'
+                              : 'w-8 h-8 object-contain'
+                        }
                       />
                     </div>
                   )}
@@ -498,7 +542,7 @@ function App() {
                       }`}
                       aria-label="추천하기"
                     >
-                      <ThumbsUp className="h-5 w-5" />
+                      <Heart className="h-5 w-5" />
                     </button>
                     <span>{selectedPost.recommendations}</span>
                   </div>
