@@ -301,8 +301,10 @@ function App() {
             <span className="text-xl font-semibold">TechBlogArchive</span>
           </div>
           <button className="flex items-center px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
-            <PlusCircle className="h-5 w-5" />
-            <span>Recommend</span>
+            <PlusCircle className="h-6 w-6 text-indigo-700 mr-2" />
+            <span className="flex items-center gap-2 text-sm text-indigo-700">
+              ✨ 블로그 글 추천하기
+            </span>
           </button>
         </div>
       </nav>
