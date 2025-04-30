@@ -28,11 +28,19 @@ jobs:
       - name: Build
         run: npm run build
         
-      - name: Configure GCP CLI
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Setup GCP
+        uses: google-github-actions/auth@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: 'Set up Cloud SDK'
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 363.0.0'
+          
+      - name: Docker Auth
+        run: |
+          echo "${{ secrets.GCP_SA_KEY }}" | docker login -u _json_key --password-stdin https://gcr.io
           
       - name: Build and Push Docker Image
         run: |
@@ -48,4 +56,4 @@ jobs:
             --platform managed \
             --region asia-northeast3 \
             --allow-unauthenticated \
-            --update-env-vars="NODE_ENV=production" 
+            --update-env-vars="NODE_ENV=production"
