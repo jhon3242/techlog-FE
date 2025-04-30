@@ -2,17 +2,14 @@ FROM node:20-alpine as build
 
 WORKDIR /app
 
-# git 설치
-RUN apk add --no-cache git
-
-# 서브모듈 초기화 및 환경 변수 파일 복사
-RUN git submodule update --init --recursive
-COPY package*.json ./
-RUN npm ci
-
 # 서브모듈의 환경 변수 파일 복사
 COPY techlog-env/front/env-common.env .env
 
+# 패키지 파일 복사 및 설치
+COPY package*.json ./
+RUN npm ci
+
+# 소스 코드 복사 및 빌드
 COPY . .
 RUN npm run build
 
