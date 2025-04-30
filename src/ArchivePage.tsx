@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Search,
   BookMarked,
@@ -45,9 +45,185 @@ interface BlogPost {
   blogType?: string;
 }
 
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (url: string) => void;
+  successMessage: string;
+}
+
+function RecommendModal({ isOpen, onClose, onSubmit, successMessage }: ModalProps) {
+  const [url, setUrl] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await onSubmit(url);
+      setSuccessMessage('추천해주셔서 감사합니다!');
+      setTimeout(() => {
+        setSuccessMessage('');
+        onClose();
+      }, 2000);
+    } catch (error) {
+      console.error('추천 등록 실패:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg"
+          >
+            <h2 className="text-xl font-semibold mb-4 text-indigo-700">블로그 글 추천하기</h2>
+            {successMessage && (
+              <div className="text-green-600 text-center py-4">
+                {successMessage}
+              </div>
+            ) || (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    블로그 URL
+                  </label>
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="https://example.com/blog-post"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !url}
+                    className={`px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {isSubmitting ? '추천 중...' : '추천하기'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center p-8">
+            <h2 className="text-2xl font-semibold text-red-600 mb-4">오류 발생</h2>
+            <p className="text-gray-600 mb-4">죄송합니다. 페이지를 다시 로드해주세요.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              다시 로드하기
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function App() {
+  // Device ID 생성 및 저장
+  const deviceId = useMemo(() => {
+    let id = localStorage.getItem('deviceId');
+    if (!id) {
+      id = uuidv4();
+      localStorage.setItem('deviceId', id);
+    }
+    return id;
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBlogType, setSelectedBlogType] = useState<string>("");
+  const [isRecommendModalOpen, setIsRecommendModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const handleRecommendClick = () => {
+    setIsRecommendModalOpen(true);
+  };
+
+  const handleRecommendSubmit = async (url: string) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/recommendations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Device-Id': deviceId,
+        },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || '추천 등록 실패');
+      }
+
+      // 성공 시 메시지 표시
+      setSuccessMessage('추천해주셔서 감사합니다!');
+      setTimeout(() => {
+        setSuccessMessage('');
+        setIsRecommendModalOpen(false);
+      }, 2000);
+    } catch (error) {
+      console.error('추천 등록 실패:', error);
+      setSuccessMessage(`추천 등록 실패: ${error.message}`);
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    }
+  };
+
+  const handleRecommendClose = () => {
+    setIsRecommendModalOpen(false);
+  };
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -55,7 +231,7 @@ function App() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
-  const [deviceId, setDeviceId] = useState<string>("");
+
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -65,11 +241,9 @@ function App() {
 
   useEffect(() => {
     const storedDeviceId = localStorage.getItem("deviceId");
-    if (storedDeviceId) setDeviceId(storedDeviceId);
-    else {
+    if (!storedDeviceId) {
       const newDeviceId = uuidv4();
       localStorage.setItem("deviceId", newDeviceId);
-      setDeviceId(newDeviceId);
     }
   }, []);
 
@@ -300,14 +474,25 @@ function App() {
             <BookMarked className="h-6 w-6 text-indigo-600" />
             <span className="text-xl font-semibold">TechBlogArchive</span>
           </div>
-          <button className="flex items-center px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+          <motion.button
+            className="flex items-center px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleRecommendClick}
+          >
             <PlusCircle className="h-6 w-6 text-indigo-700 mr-2" />
             <span className="flex items-center gap-2 text-sm text-indigo-700">
               ✨ 블로그 글 추천하기
             </span>
-          </button>
+          </motion.button>
         </div>
       </nav>
+      <RecommendModal
+        isOpen={isRecommendModalOpen}
+        onClose={handleRecommendClose}
+        onSubmit={handleRecommendSubmit}
+        successMessage={successMessage}
+      />
 
       <div className="pt-16 pb-8 max-w-4xl mx-auto px-4">
         <h1 className="text-4xl font-bold text-center mb-4">
@@ -571,4 +756,10 @@ function App() {
   );
 }
 
-export default App;
+const AppWithBoundary = () => (
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
+
+export default AppWithBoundary;
