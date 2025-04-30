@@ -52,13 +52,15 @@ jobs:
         env:
           NODE_ENV: production
           
-      - name: Deploy to Compute Engine
+      - name: Deploy to Cloud Run
         run: |
-          # Docker 이미지 배포
-          gcloud compute ssh techlog-dev --zone asia-northeast3-a --command="sudo docker pull gcr.io/${{ secrets.GCP_PROJECT_ID }}/techlog-fe:$GITHUB_SHA"
-          
-          # 기존 컨테이너 중지
-          gcloud compute ssh techlog-dev --zone asia-northeast3-a --command="sudo docker stop techlog-fe || true"
-          
-          # 새로운 컨테이너 실행
-          gcloud compute ssh techlog-dev --zone asia-northeast3-a --command="sudo docker run -d --name techlog-fe -p 80:8080 --restart always --env NODE_ENV=production gcr.io/${{ secrets.GCP_PROJECT_ID }}/techlog-fe:$GITHUB_SHA"
+          gcloud run deploy techlog-fe \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/techlog-fe:$GITHUB_SHA \
+            --region asia-northeast3 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars="NODE_ENV=production" \
+            --memory=1Gi \
+            --cpu=1 \
+            --max-instances=3 \
+            --min-instances=1
