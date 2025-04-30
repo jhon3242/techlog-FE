@@ -2,6 +2,9 @@ FROM node:20-alpine as build
 
 WORKDIR /app
 
+# git 설치
+RUN apk add --no-cache git
+
 # 서브모듈 초기화 및 환경 변수 파일 복사
 RUN git submodule update --init --recursive
 COPY package*.json ./
