@@ -90,7 +90,7 @@ function RecommendModal({ isOpen, onClose, onSubmit, successMessage, setSuccessM
             transition={{ duration: 0.3 }}
             className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg"
           >
-            <h2 className="text-xl font-semibold mb-4 text-indigo-700">블로그 글 추천하기</h2>
+            <h2 className="text-xl font-semibold mb-4 text-[#4C8CF7]">블로그 글 추천하기</h2>
             {successMessage && (
               <div className="text-green-600 text-center py-4">
                 {successMessage}
@@ -106,7 +106,7 @@ function RecommendModal({ isOpen, onClose, onSubmit, successMessage, setSuccessM
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#4C8CF7] focus:border-[#4C8CF7]"
                     placeholder="https://example.com/blog-post"
                   />
                 </div>
@@ -121,7 +121,7 @@ function RecommendModal({ isOpen, onClose, onSubmit, successMessage, setSuccessM
                   <button
                     type="submit"
                     disabled={isSubmitting || !url}
-                    className={`px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed`}
+                    className={`px-4 py-2 text-sm font-medium text-white bg-[#4C8CF7] rounded-md hover:bg-[#3A7DE8] disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {isSubmitting ? '추천 중...' : '추천하기'}
                   </button>
@@ -471,18 +471,19 @@ function App() {
     <div className="min-h-screen relative">
       <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex justify-between items-center h-16 px-4">
-          <div className="flex items-center space-x-2">
-            <BookMarked className="h-6 w-6 text-indigo-600" />
-            <span className="text-xl font-semibold">TechBlogArchive</span>
+          <div className="flex items-center">
+            <a href="/" className="cursor-pointer">
+              <img src="/images/logo.png" alt="TechBlogArchive Logo" className="h-12" />
+            </a>
           </div>
           <motion.button
-            className="flex items-center px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+            className="flex items-center px-4 py-2 rounded-lg bg-[#F5F9FF] text-[#4C8CF7] hover:bg-[#E6F0FF]"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleRecommendClick}
           >
-            <PlusCircle className="h-6 w-6 text-indigo-700 mr-2" />
-            <span className="flex items-center gap-2 text-sm text-indigo-700">
+            <PlusCircle className="h-6 w-6 text-[#4C8CF7] mr-2" />
+            <span className="flex items-center gap-2 text-sm text-[#4C8CF7]">
               ✨ 블로그 글 추천하기
             </span>
           </motion.button>
@@ -513,13 +514,13 @@ function App() {
                   }
                 }}
                 placeholder="Search by topic"
-                className="w-full py-3 pl-10 pr-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-indigo-500"
+                className="w-full py-3 pl-10 pr-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-[#4C8CF7]"
               />
             </div>
             <select
               value={selectedBlogType}
               onChange={(e) => setSelectedBlogType(e.target.value)}
-              className="py-3 px-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-indigo-500"
+              className="py-3 px-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-[#4C8CF7]"
             >
               <option value="">전체 블로그</option>
               <option value="WOOWABRO">우아한형제들</option>
@@ -531,7 +532,7 @@ function App() {
             </select>
             <button
               onClick={handleSearch}
-              className="px-6 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500"
+              className="px-6 py-3 rounded-xl bg-[#4C8CF7] text-white hover:bg-[#3A7DE8] focus:ring-2 focus:ring-[#4C8CF7]"
             >
               Search
             </button>
@@ -543,7 +544,7 @@ function App() {
                 onClick={() => handleTagToggle(tag)}
                 className={`px-3 py-1 rounded-full text-sm ${
                   selectedTags.includes(tag)
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-[#4C8CF7] text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -635,8 +636,8 @@ function App() {
                             e.stopPropagation();
                             handleRecommend(post.id);
                           }}
-                          className={`focus:outline-none transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer ${
-                            isRecommended ? 'text-indigo-600' : 'text-gray-400'
+                          className={`focus:outline-none transition hover:bg-[#E6F0FF] hover:scale-110 rounded-full p-1 cursor-pointer ${
+                            isRecommended ? 'text-[#4C8CF7]' : 'text-gray-400'
                           }`}
                           aria-label="추천하기"
                         >
@@ -713,21 +714,21 @@ function App() {
                       href={selectedPost.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
+                      className="inline-block bg-[#4C8CF7] text-white px-6 py-3 rounded-lg hover:bg-[#3A7DE8]"
                     >
                       원문 보기 🔗
                     </a>
                   </div>
                 )}
                 <div className="flex justify-between mt-8 pt-6 border-t">
-                  <div className="flex items-center space-x-1 text-indigo-600">
+                  <div className="flex items-center space-x-1 text-[#4C8CF7]">
                     <button
                       onClick={e => {
                         e.stopPropagation();
                         handleRecommend(selectedPost.id);
                       }}
-                      className={`focus:outline-none transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer ${
-                        localStorage.getItem(`recommended_${selectedPost.id}`) === '1' ? 'text-indigo-600' : 'text-gray-400'
+                      className={`focus:outline-none transition hover:bg-[#E6F0FF] hover:scale-110 rounded-full p-1 cursor-pointer ${
+                        localStorage.getItem(`recommended_${selectedPost.id}`) === '1' ? 'text-[#4C8CF7]' : 'text-gray-400'
                       }`}
                       aria-label="추천하기"
                     >
@@ -749,7 +750,7 @@ function App() {
       {showScrollTop && (
         <button
           onClick={handleScrollToTop}
-          className="fixed bottom-8 right-8 bg-indigo-600 text-white p-3 rounded-full hover:bg-indigo-700 shadow-lg"
+          className="fixed bottom-8 right-8 bg-[#4C8CF7] text-white p-3 rounded-full hover:bg-[#3A7DE8] shadow-lg"
         >
           <ArrowUp className="h-5 w-5" />
         </button>
