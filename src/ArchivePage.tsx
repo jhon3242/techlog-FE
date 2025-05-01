@@ -50,9 +50,10 @@ interface ModalProps {
   onClose: () => void;
   onSubmit: (url: string) => void;
   successMessage: string;
+  setSuccessMessage: (message: string) => void;
 }
 
-function RecommendModal({ isOpen, onClose, onSubmit, successMessage }: ModalProps) {
+function RecommendModal({ isOpen, onClose, onSubmit, successMessage, setSuccessMessage }: ModalProps) {
   const [url, setUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -492,6 +493,7 @@ function App() {
         onClose={handleRecommendClose}
         onSubmit={handleRecommendSubmit}
         successMessage={successMessage}
+        setSuccessMessage={setSuccessMessage}
       />
 
       <div className="pt-16 pb-8 max-w-4xl mx-auto px-4">
