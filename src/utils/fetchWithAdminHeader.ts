@@ -1,8 +1,13 @@
 // src/utils/fetchWithAdminHeader.ts
+import { API_BASE_URL } from './apiConfig';
+
 const ADMIN_HEADER = import.meta.env.VITE_ADMIN_HEADER;
 
-export function fetchWithAdminHeader(input: RequestInfo | URL, init?: RequestInit) {
-  return fetch(input, {
+export function fetchWithAdminHeader(path: string, init?: RequestInit) {
+  // Ensure path doesn't start with a slash when concatenating
+  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  
+  return fetch(url, {
     ...init,
     headers: {
       ...(init?.headers || {}),

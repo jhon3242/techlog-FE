@@ -3,6 +3,7 @@ import { fetchWithAdminHeader } from './utils/fetchWithAdminHeader';
 import AdminRecommendManager from './AdminRecommendManager';
 import { BookMarked, PlusCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from './utils/apiConfig';
 
 interface BlogResponse {
   title: string;
@@ -47,7 +48,7 @@ function AdminBlogManager() {
 
   // 태그 목록 불러오기
   useEffect(() => {
-    fetch('http://localhost:8080/api/tags')
+    fetch(`${API_BASE_URL}/api/tags`)
       .then(res => res.json())
       .then((tags: {id: number, name: string}[]) => setRecommendedTags(tags.map(t => t.name)))
       .catch(() => setRecommendedTags([]));
@@ -76,7 +77,7 @@ function AdminBlogManager() {
   // 등록된 포스트 목록 불러오기 (페이지네이션)
   const fetchPosts = async (currentPage: number) => {
     try {
-      let url = `http://localhost:8080/api/posters?page=${currentPage}&size=${size}`;
+      let url = `/api/posters?page=${currentPage}&size=${size}`;
       if (postSearch.trim() || selectedBlogType || selectedTags.length > 0) {
         const params = new URLSearchParams();
         if (postSearch.trim()) {
@@ -88,7 +89,7 @@ function AdminBlogManager() {
         selectedTags.forEach(tag => {
           params.append('tags', tag);
         });
-        url = `http://localhost:8080/api/search?${params.toString()}`;
+        url = `/api/search?${params.toString()}`;
       }
 
       const response = await fetchWithAdminHeader(url);
@@ -111,7 +112,7 @@ function AdminBlogManager() {
 
   const handleDeletePost = async (id: number) => {
     if (!window.confirm('정말 삭제하시겠습니까?')) return;
-    await fetchWithAdminHeader(`http://localhost:8080/api/posters/${id}`, { method: 'DELETE' });
+    await fetchWithAdminHeader(`/api/posters/${id}`, { method: 'DELETE' });
     setAllPosts(posts => posts.filter(p => p.id !== id));
   };
 
@@ -130,7 +131,7 @@ function AdminBlogManager() {
       setError(null);
 
       if (mode === 'single') {
-        const response = await fetchWithAdminHeader('http://localhost:8080/api/blog', {
+        const response = await fetchWithAdminHeader('/api/blog', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: urlInput })
@@ -141,7 +142,7 @@ function AdminBlogManager() {
         const data: BlogResponse = await response.json();
         setBlogs([data]);
       } else {
-        const response = await fetchWithAdminHeader('http://localhost:8080/api/blogs', {
+        const response = await fetchWithAdminHeader('/api/blogs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: urlInput })
@@ -166,7 +167,7 @@ function AdminBlogManager() {
       setLoading(true);
       setError(null);
 
-      const response = await fetchWithAdminHeader('http://localhost:8080/api/posters', {
+      const response = await fetchWithAdminHeader('/api/posters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -216,7 +217,7 @@ function AdminBlogManager() {
     });
     if (!recommendedTags.includes(processedTag)) {
       try {
-        const res = await fetchWithAdminHeader('http://localhost:8080/api/tag', {
+        const res = await fetchWithAdminHeader('/api/tag', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: processedTag })
@@ -244,7 +245,7 @@ function AdminBlogManager() {
   const handleDeleteTag = async (tag: string) => {
     if (!window.confirm('정말 이 태그를 삭제하시겠습니까?')) return;
     try {
-      const response = await fetchWithAdminHeader('http://localhost:8080/api/tag', {
+      const response = await fetchWithAdminHeader('/api/tag', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: tag })
@@ -268,7 +269,7 @@ function AdminBlogManager() {
     const processedTag = /^[a-zA-Z]+$/.test(newTag) ? newTag.toUpperCase() : newTag;
     
     try {
-      const response = await fetchWithAdminHeader('http://localhost:8080/api/tag', {
+      const response = await fetchWithAdminHeader('/api/tag', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: processedTag })

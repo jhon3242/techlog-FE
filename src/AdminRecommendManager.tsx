@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAdminHeader } from './utils/fetchWithAdminHeader';
 import { ThumbsUp, ThumbsDown, Check, X } from 'lucide-react';
+import { API_BASE_URL } from './utils/apiConfig';
 
 interface RecommendedPost {
   id: number;
@@ -23,7 +24,7 @@ function AdminRecommendManager() {
   const fetchRecommendedPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetchWithAdminHeader('http://localhost:8080/api/recommendations');
+      const response = await fetchWithAdminHeader('/api/recommendations');
       if (!response.ok) throw new Error('Failed to fetch recommendations');
       const data = await response.json();
       setRecommendedPosts(data);
@@ -37,7 +38,7 @@ function AdminRecommendManager() {
 
   const handleStatusChange = async (id: number, status: 'APPROVED' | 'REJECTED') => {
     try {
-      const response = await fetchWithAdminHeader(`http://localhost:8080/api/recommendations/${id}/status`, {
+      const response = await fetchWithAdminHeader(`/api/recommendations/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })

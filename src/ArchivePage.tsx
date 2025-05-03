@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
+import { API_BASE_URL } from "./utils/apiConfig";
 
 const blogTypeLogos: { [key: string]: string } = {
   WOOWABRO: "/images/woowa-icon.png",
@@ -193,7 +194,7 @@ function App() {
 
   const handleRecommendSubmit = async (url: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/recommendations', {
+      const response = await fetch(`${API_BASE_URL}/api/recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -249,7 +250,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/tags')
+    fetch(`${API_BASE_URL}/api/tags`)
       .then(res => res.json())
       .then((tags: {id: number, name: string}[]) => setAvailableTags(tags.map(t => t.name)))
       .catch(() => setAvailableTags([]));
@@ -285,7 +286,7 @@ function App() {
       if (currentPage === 0) setLoading(true);
       else setLoadingMore(true);
 
-      let url = `http://localhost:8080/api/posters?page=${currentPage}&size=${size}`;
+      let url = `${API_BASE_URL}/api/posters?page=${currentPage}&size=${size}`;
       if (searchQuery.trim() || selectedBlogType || selectedTags.length > 0) {
         const params = new URLSearchParams();
         if (searchQuery.trim()) {
@@ -297,7 +298,7 @@ function App() {
         selectedTags.forEach(tag => {
           params.append('tags', tag);
         });
-        url = `http://localhost:8080/api/search?${params.toString()}`;
+        url = `${API_BASE_URL}/api/search?${params.toString()}`;
       }
 
       const res = await fetch(url);
@@ -393,7 +394,7 @@ function App() {
     setSelectedPost(post);
     const viewedKey = `viewed_${post.id}`;
     if (localStorage.getItem(viewedKey) !== '1') {
-      fetch(`http://localhost:8080/api/posters/${post.id}/view`, {
+      fetch(`${API_BASE_URL}/api/posters/${post.id}/view`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
       }).catch(console.error);
@@ -410,7 +411,7 @@ function App() {
     const isRecommended = localStorage.getItem(recommendedKey) === '1';
     
     try {
-      await fetch(`http://localhost:8080/api/posters/${postId}/recommend`, {
+      await fetch(`${API_BASE_URL}/api/posters/${postId}/recommend`, {
         method: isRecommended ? "DELETE" : "PUT",
         headers: {
           "Content-Type": "application/json",
