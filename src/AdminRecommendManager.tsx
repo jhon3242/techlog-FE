@@ -83,7 +83,7 @@ function AdminRecommendManager() {
                   href={post.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-[#4C8CF7] hover:underline"
                 >
                   {post.url}
                 </a>

@@ -53,7 +53,7 @@ const AdminAuth: React.FC = () => {
             </p>
             <button 
               onClick={() => window.location.href = '/'}
-              className="mt-6 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors duration-300"
+              className="mt-6 bg-[#4C8CF7] hover:bg-[#3A7DE8] text-white font-medium py-2 px-4 rounded transition-colors duration-300"
             >
               홈으로 돌아가기
             </button>

@@ -293,7 +293,7 @@ function AdminBlogManager() {
               <img src="/images/logo.png" alt="TechBlogArchive Logo" className="h-12" />
             </a>
           </div>
-          <button className="flex items-center px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+          <button className="flex items-center px-4 py-2 rounded-lg bg-[#E6EFFF] text-[#4C8CF7] hover:bg-[#C9DFFF]">
             <PlusCircle className="h-5 w-5" />
             <span>Recommend</span>
           </button>
@@ -308,7 +308,7 @@ function AdminBlogManager() {
               onClick={() => setActiveTab('blogs')}
               className={`px-4 py-2 rounded-lg ${
                 activeTab === 'blogs'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-[#4C8CF7] text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -318,7 +318,7 @@ function AdminBlogManager() {
               onClick={() => setActiveTab('recommendations')}
               className={`px-4 py-2 rounded-lg ${
                 activeTab === 'recommendations'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-[#4C8CF7] text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -328,7 +328,7 @@ function AdminBlogManager() {
               onClick={() => setActiveTab('tags')}
               className={`px-4 py-2 rounded-lg ${
                 activeTab === 'tags'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-[#4C8CF7] text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -369,7 +369,7 @@ function AdminBlogManager() {
                   </select>
                   <button
                     onClick={handleSearch}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                    className="px-4 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8]"
                   >
                     Search
                   </button>
@@ -381,7 +381,7 @@ function AdminBlogManager() {
                       onClick={() => handleTagToggle(tag)}
                       className={`px-3 py-1 rounded-full text-sm ${
                         selectedTags.includes(tag)
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-[#4C8CF7] text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
@@ -426,7 +426,7 @@ function AdminBlogManager() {
                 {pageButtons.map(idx => (
                   <button
                     key={idx}
-                    className={`px-3 py-1 rounded ${page === idx ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
+                    className={`px-3 py-1 rounded ${page === idx ? 'bg-[#4C8CF7] text-white' : 'bg-gray-200'}`}
                     onClick={() => setPage(idx)}
                     disabled={idx < 0}
                   >
@@ -464,7 +464,7 @@ function AdminBlogManager() {
                 onChange={(e) => setUrlInput(e.target.value)}
               />
               <button
-                className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="mt-4 px-6 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8]"
                 onClick={handleFetchBlogs}
                 disabled={loading || urlInput.trim() === ''}
               >
@@ -563,7 +563,7 @@ function AdminBlogManager() {
                             <button
                               key={tag}
                               type="button"
-                              className={`px-3 py-1 rounded-full text-sm border ${blog.tags?.includes(tag) ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-indigo-50'}`}
+                              className={`px-3 py-1 rounded-full text-sm border ${blog.tags?.includes(tag) ? 'bg-[#C9DFFF] text-[#4C8CF7] border-indigo-300' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-[#E6EFFF]'}`}
                               onClick={() => blog.tags?.includes(tag) ? handleTagRemove(index, tag) : handleTagAdd(index, tag)}
                             >
                               {tag}
@@ -630,7 +630,7 @@ function AdminBlogManager() {
               />
               <button
                 onClick={handleAddTag}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="px-4 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8]"
               >
                 태그 추가
               </button>
