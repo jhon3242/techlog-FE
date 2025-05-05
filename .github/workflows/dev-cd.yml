@@ -2,7 +2,7 @@ name: Dev CD Pipeline
 
 on:
   workflow_dispatch:
-  pull_request:
+  push:
     branches: [ dev ]
 
 jobs:
