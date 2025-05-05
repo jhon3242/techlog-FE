@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Search,
   BookMarked,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
+import { API_BASE_URL } from "./utils/apiConfig";
 
 const blogTypeLogos: { [key: string]: string } = {
   WOOWABRO: "/images/woowa-icon.png",
@@ -45,9 +46,186 @@ interface BlogPost {
   blogType?: string;
 }
 
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (url: string) => void;
+  successMessage: string;
+  setSuccessMessage: (message: string) => void;
+}
+
+function RecommendModal({ isOpen, onClose, onSubmit, successMessage, setSuccessMessage }: ModalProps) {
+  const [url, setUrl] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await onSubmit(url);
+      setSuccessMessage('추천해주셔서 감사합니다!');
+      setTimeout(() => {
+        setSuccessMessage('');
+        onClose();
+      }, 2000);
+    } catch (error) {
+      console.error('추천 등록 실패:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg"
+          >
+            <h2 className="text-xl font-semibold mb-4 text-[#4C8CF7]">블로그 글 추천하기</h2>
+            {successMessage && (
+              <div className="text-green-600 text-center py-4">
+                {successMessage}
+              </div>
+            ) || (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    블로그 URL
+                  </label>
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#4C8CF7] focus:border-[#4C8CF7]"
+                    placeholder="https://example.com/blog-post"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !url}
+                    className={`px-4 py-2 text-sm font-medium text-white bg-[#4C8CF7] rounded-md hover:bg-[#3A7DE8] disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {isSubmitting ? '추천 중...' : '추천하기'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center p-8">
+            <h2 className="text-2xl font-semibold text-red-600 mb-4">오류 발생</h2>
+            <p className="text-gray-600 mb-4">죄송합니다. 페이지를 다시 로드해주세요.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              다시 로드하기
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function App() {
+  // Device ID 생성 및 저장
+  const deviceId = useMemo(() => {
+    let id = localStorage.getItem('deviceId');
+    if (!id) {
+      id = uuidv4();
+      localStorage.setItem('deviceId', id);
+    }
+    return id;
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBlogType, setSelectedBlogType] = useState<string>("");
+  const [isRecommendModalOpen, setIsRecommendModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const handleRecommendClick = () => {
+    setIsRecommendModalOpen(true);
+  };
+
+  const handleRecommendSubmit = async (url: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/recommendations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Device-Id': deviceId,
+        },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || '추천 등록 실패');
+      }
+
+      // 성공 시 메시지 표시
+      setSuccessMessage('추천해주셔서 감사합니다!');
+      setTimeout(() => {
+        setSuccessMessage('');
+        setIsRecommendModalOpen(false);
+      }, 2000);
+    } catch (error) {
+      console.error('추천 등록 실패:', error);
+      setSuccessMessage(`추천 등록 실패: ${error.message}`);
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    }
+  };
+
+  const handleRecommendClose = () => {
+    setIsRecommendModalOpen(false);
+  };
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -55,7 +233,7 @@ function App() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
-  const [deviceId, setDeviceId] = useState<string>("");
+
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -65,16 +243,14 @@ function App() {
 
   useEffect(() => {
     const storedDeviceId = localStorage.getItem("deviceId");
-    if (storedDeviceId) setDeviceId(storedDeviceId);
-    else {
+    if (!storedDeviceId) {
       const newDeviceId = uuidv4();
       localStorage.setItem("deviceId", newDeviceId);
-      setDeviceId(newDeviceId);
     }
   }, []);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/tags')
+    fetch(`${API_BASE_URL}/api/tags`)
       .then(res => res.json())
       .then((tags: {id: number, name: string}[]) => setAvailableTags(tags.map(t => t.name)))
       .catch(() => setAvailableTags([]));
@@ -110,7 +286,7 @@ function App() {
       if (currentPage === 0) setLoading(true);
       else setLoadingMore(true);
 
-      let url = `http://localhost:8080/api/posters?page=${currentPage}&size=${size}`;
+      let url = `${API_BASE_URL}/api/posters?page=${currentPage}&size=${size}`;
       if (searchQuery.trim() || selectedBlogType || selectedTags.length > 0) {
         const params = new URLSearchParams();
         if (searchQuery.trim()) {
@@ -122,7 +298,7 @@ function App() {
         selectedTags.forEach(tag => {
           params.append('tags', tag);
         });
-        url = `http://localhost:8080/api/search?${params.toString()}`;
+        url = `${API_BASE_URL}/api/search?${params.toString()}`;
       }
 
       const res = await fetch(url);
@@ -218,7 +394,7 @@ function App() {
     setSelectedPost(post);
     const viewedKey = `viewed_${post.id}`;
     if (localStorage.getItem(viewedKey) !== '1') {
-      fetch(`http://localhost:8080/api/posters/${post.id}/view`, {
+      fetch(`${API_BASE_URL}/api/posters/${post.id}/view`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "X-Device-Id": deviceId },
       }).catch(console.error);
@@ -235,7 +411,7 @@ function App() {
     const isRecommended = localStorage.getItem(recommendedKey) === '1';
     
     try {
-      await fetch(`http://localhost:8080/api/posters/${postId}/recommend`, {
+      await fetch(`${API_BASE_URL}/api/posters/${postId}/recommend`, {
         method: isRecommended ? "DELETE" : "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -296,16 +472,31 @@ function App() {
     <div className="min-h-screen relative">
       <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex justify-between items-center h-16 px-4">
-          <div className="flex items-center space-x-2">
-            <BookMarked className="h-6 w-6 text-indigo-600" />
-            <span className="text-xl font-semibold">TechBlogArchive</span>
+          <div className="flex items-center">
+            <a href="/" className="cursor-pointer">
+              <img src="/images/logo.png" alt="TechBlogArchive Logo" className="h-12" />
+            </a>
           </div>
-          <button className="flex items-center px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
-            <PlusCircle className="h-5 w-5" />
-            <span>Recommend</span>
-          </button>
+          <motion.button
+            className="flex items-center px-4 py-2 rounded-lg bg-[#F5F9FF] text-[#4C8CF7] hover:bg-[#E6F0FF]"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleRecommendClick}
+          >
+            <PlusCircle className="h-6 w-6 text-[#4C8CF7] mr-2" />
+            <span className="flex items-center gap-2 text-sm text-[#4C8CF7]">
+              ✨ 블로그 글 추천하기
+            </span>
+          </motion.button>
         </div>
       </nav>
+      <RecommendModal
+        isOpen={isRecommendModalOpen}
+        onClose={handleRecommendClose}
+        onSubmit={handleRecommendSubmit}
+        successMessage={successMessage}
+        setSuccessMessage={setSuccessMessage}
+      />
 
       <div className="pt-16 pb-8 max-w-4xl mx-auto px-4">
         <h1 className="text-4xl font-bold text-center mb-4">
@@ -324,13 +515,13 @@ function App() {
                   }
                 }}
                 placeholder="Search by topic"
-                className="w-full py-3 pl-10 pr-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-indigo-500"
+                className="w-full py-3 pl-10 pr-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-[#4C8CF7]"
               />
             </div>
             <select
               value={selectedBlogType}
               onChange={(e) => setSelectedBlogType(e.target.value)}
-              className="py-3 px-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-indigo-500"
+              className="py-3 px-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-[#4C8CF7]"
             >
               <option value="">전체 블로그</option>
               <option value="WOOWABRO">우아한형제들</option>
@@ -342,7 +533,7 @@ function App() {
             </select>
             <button
               onClick={handleSearch}
-              className="px-6 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500"
+              className="px-6 py-3 rounded-xl bg-[#4C8CF7] text-white hover:bg-[#3A7DE8] focus:ring-2 focus:ring-[#4C8CF7]"
             >
               Search
             </button>
@@ -354,7 +545,7 @@ function App() {
                 onClick={() => handleTagToggle(tag)}
                 className={`px-3 py-1 rounded-full text-sm ${
                   selectedTags.includes(tag)
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-[#4C8CF7] text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -446,8 +637,8 @@ function App() {
                             e.stopPropagation();
                             handleRecommend(post.id);
                           }}
-                          className={`focus:outline-none transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer ${
-                            isRecommended ? 'text-indigo-600' : 'text-gray-400'
+                          className={`focus:outline-none transition hover:bg-[#E6F0FF] hover:scale-110 rounded-full p-1 cursor-pointer ${
+                            isRecommended ? 'text-[#4C8CF7]' : 'text-gray-400'
                           }`}
                           aria-label="추천하기"
                         >
@@ -524,21 +715,21 @@ function App() {
                       href={selectedPost.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
+                      className="inline-block bg-[#4C8CF7] text-white px-6 py-3 rounded-lg hover:bg-[#3A7DE8]"
                     >
                       원문 보기 🔗
                     </a>
                   </div>
                 )}
                 <div className="flex justify-between mt-8 pt-6 border-t">
-                  <div className="flex items-center space-x-1 text-indigo-600">
+                  <div className="flex items-center space-x-1 text-[#4C8CF7]">
                     <button
                       onClick={e => {
                         e.stopPropagation();
                         handleRecommend(selectedPost.id);
                       }}
-                      className={`focus:outline-none transition hover:bg-indigo-100 hover:scale-110 rounded-full p-1 cursor-pointer ${
-                        localStorage.getItem(`recommended_${selectedPost.id}`) === '1' ? 'text-indigo-600' : 'text-gray-400'
+                      className={`focus:outline-none transition hover:bg-[#E6F0FF] hover:scale-110 rounded-full p-1 cursor-pointer ${
+                        localStorage.getItem(`recommended_${selectedPost.id}`) === '1' ? 'text-[#4C8CF7]' : 'text-gray-400'
                       }`}
                       aria-label="추천하기"
                     >
@@ -560,7 +751,7 @@ function App() {
       {showScrollTop && (
         <button
           onClick={handleScrollToTop}
-          className="fixed bottom-8 right-8 bg-indigo-600 text-white p-3 rounded-full hover:bg-indigo-700 shadow-lg"
+          className="fixed bottom-8 right-8 bg-[#4C8CF7] text-white p-3 rounded-full hover:bg-[#3A7DE8] shadow-lg"
         >
           <ArrowUp className="h-5 w-5" />
         </button>
@@ -569,4 +760,10 @@ function App() {
   );
 }
 
-export default App;
+const AppWithBoundary = () => (
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
+
+export default AppWithBoundary;
