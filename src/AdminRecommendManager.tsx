@@ -5,11 +5,9 @@ import { API_BASE_URL } from './utils/apiConfig';
 
 interface RecommendedPost {
   id: number;
-  title: string;
   url: string;
-  recommendedBy: string;
+  status: string;
   recommendedAt: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
 function AdminRecommendManager() {
@@ -24,7 +22,7 @@ function AdminRecommendManager() {
   const fetchRecommendedPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetchWithAdminHeader('/api/recommendations');
+      const response = await fetchWithAdminHeader('/api/blogs/recommendations');
       if (!response.ok) throw new Error('Failed to fetch recommendations');
       const data = await response.json();
       setRecommendedPosts(data);
@@ -78,12 +76,11 @@ function AdminRecommendManager() {
           <div key={post.id} className="border rounded-lg p-6 shadow-sm">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
                 <a 
                   href={post.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-[#4C8CF7] hover:underline"
+                  className="text-[#4C8CF7] hover:underline text-lg font-semibold"
                 >
                   {post.url}
                 </a>
@@ -92,16 +89,9 @@ function AdminRecommendManager() {
                 {post.status}
               </span>
             </div>
-            
-            <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
-              <div>
-                <span className="font-medium">Recommended by:</span> {post.recommendedBy}
-              </div>
-              <div>
-                <span className="font-medium">Date:</span> {new Date(post.recommendedAt).toLocaleDateString()}
-              </div>
+            <div className="flex justify-end text-sm text-gray-600 mb-4">
+              <span className="font-medium">추천일:</span>&nbsp;{new Date(post.recommendedAt).toLocaleString()}
             </div>
-
             {post.status === 'PENDING' && (
               <div className="flex justify-end space-x-4">
                 <button

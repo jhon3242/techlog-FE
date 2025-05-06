@@ -194,7 +194,7 @@ function App() {
 
   const handleRecommendSubmit = async (url: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/recommendations`, {
+      const response = await fetch(`${API_BASE_URL}/api/blogs/recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
