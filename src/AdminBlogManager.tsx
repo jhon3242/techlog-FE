@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { fetchWithAdminHeader } from './utils/fetchWithAdminHeader';
 import AdminRecommendManager from './AdminRecommendManager';
-import { BookMarked, PlusCircle } from "lucide-react";
+import { BookMarked, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from './utils/apiConfig';
 
@@ -45,6 +45,9 @@ function AdminBlogManager() {
   const [selectedBlogType, setSelectedBlogType] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+
+  const [currentBlogIndex, setCurrentBlogIndex] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   // 태그 목록 불러오기
   useEffect(() => {
@@ -176,7 +179,7 @@ function AdminBlogManager() {
             thumbnail: blog.thumbnail,
             content: blog.content,
             url: blog.url,
-            blogType: blog.blogType,
+            blogType: blog.blogType || '',  // blogType이 없을 경우 빈 문자열로 처리
             tags: blog.tags
           }))
         })
@@ -282,6 +285,14 @@ function AdminBlogManager() {
     } catch (error) {
       console.error('Failed to add tag:', error);
     }
+  };
+
+  const handlePrevBlog = () => {
+    setCurrentBlogIndex(prev => (prev > 0 ? prev - 1 : blogs.length - 1));
+  };
+
+  const handleNextBlog = () => {
+    setCurrentBlogIndex(prev => (prev < blogs.length - 1 ? prev + 1 : 0));
   };
 
   return (
@@ -477,103 +488,157 @@ function AdminBlogManager() {
 
             {blogs.length > 0 && (
               <div className="space-y-8">
-                {blogs.map((blog, index) => (
-                  <div key={index} className="border p-6 rounded-lg shadow">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="font-semibold">Title</label>
-                        <input
-                          type="text"
-                          className="w-full border p-2 rounded-lg"
-                          value={blog.title}
-                          onChange={(e) => handleChange(index, 'title', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="font-semibold">Thumbnail URL</label>
-                        <input
-                          type="text"
-                          className="w-full border p-2 rounded-lg"
-                          value={blog.thumbnail || ''}
-                          onChange={(e) => handleChange(index, 'thumbnail', e.target.value)}
-                        />
-                        {blog.thumbnail && (
-                          <img src={blog.thumbnail} alt="thumbnail" className="mt-2 w-full h-48 object-cover rounded" />
-                        )}
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="font-semibold">Content</label>
-                        <textarea
-                          className="w-full border p-2 rounded-lg"
-                          rows={6}
-                          value={blog.content}
-                          onChange={(e) => handleChange(index, 'content', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="font-semibold">Blog URL</label>
-                        <input
-                          type="text"
-                          className="w-full border p-2 rounded-lg"
-                          value={blog.url}
-                          onChange={(e) => handleChange(index, 'url', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="font-semibold">Blog Type</label>
-                        <select
-                          className="w-full border p-2 rounded-lg"
-                          value={blog.blogType}
-                          onChange={(e) => handleChange(index, 'blogType', e.target.value)}
-                        >
-                          {blogTypes.map(type => (
-                            <option key={type.value} value={type.value}>{type.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="font-semibold">Tags</label>
-                        <div className="flex flex-wrap gap-2 mb-2 mt-1">
-                          {(blog.tags || []).map((tag, i) => (
-                            <span key={i} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                              {tag}
-                              <button type="button" className="ml-1 text-gray-500 hover:text-red-500" onClick={() => handleTagRemove(index, tag)}>
-                                ×
-                              </button>
-                            </span>
-                          ))}
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    onClick={handlePrevBlog}
+                    className="p-2 rounded-full hover:bg-gray-100"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <span className="text-sm text-gray-500">
+                    {currentBlogIndex + 1} / {blogs.length}
+                  </span>
+                  <button
+                    onClick={handleNextBlog}
+                    className="p-2 rounded-full hover:bg-gray-100"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="relative w-full overflow-hidden">
+                  <div
+                    className="flex transition-transform duration-300 ease-in-out"
+                    style={{
+                      transform: `translateX(-${currentBlogIndex * 100}%)`,
+                      width: `${blogs.length * 100}%`
+                    }}
+                  >
+                    {blogs.map((blog, index) => (
+                      <div
+                        key={index}
+                        className="w-full flex-shrink-0 px-4"
+                      >
+                        <div className="border p-6 rounded-lg shadow bg-white">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <label className="font-semibold">Title</label>
+                              <input
+                                type="text"
+                                className="w-full border p-2 rounded-lg"
+                                value={blog.title}
+                                onChange={(e) => handleChange(index, 'title', e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <label className="font-semibold">Thumbnail URL</label>
+                              <input
+                                type="text"
+                                className="w-full border p-2 rounded-lg"
+                                value={blog.thumbnail || ''}
+                                onChange={(e) => handleChange(index, 'thumbnail', e.target.value)}
+                              />
+                              {blog.thumbnail && (
+                                <div className="mt-2 w-full h-48 overflow-hidden rounded-lg border">
+                                  <img 
+                                    src={blog.thumbnail} 
+                                    alt="thumbnail" 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      console.error('Image failed to load:', blog.thumbnail);
+                                      (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="font-semibold">Content</label>
+                              <div className="mt-2 p-4 bg-gray-50 rounded-lg whitespace-pre-wrap break-words">
+                                {blog.content}
+                              </div>
+                              <textarea
+                                className="w-full border p-2 rounded-lg mt-2"
+                                rows={6}
+                                value={blog.content}
+                                onChange={(e) => handleChange(index, 'content', e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <label className="font-semibold">Blog URL</label>
+                              <input
+                                type="text"
+                                className="w-full border p-2 rounded-lg"
+                                value={blog.url}
+                                onChange={(e) => handleChange(index, 'url', e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <label className="font-semibold">Blog Type</label>
+                              <select
+                                className="w-full border p-2 rounded-lg"
+                                value={blog.blogType}
+                                onChange={(e) => handleChange(index, 'blogType', e.target.value)}
+                              >
+                                <option value="">Select Type</option>
+                                {blogTypes.map(type => (
+                                  <option key={type.value} value={type.value}>{type.label}</option>
+                                ))}
+                              </select>
+                              {blog.blogType && (
+                                <div className="mt-2 p-2 bg-gray-50 rounded-lg">
+                                  <span className="text-sm text-gray-600">
+                                    Crawled Type: {blogTypes.find(t => t.value === blog.blogType)?.label || blog.blogType}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="font-semibold">Tags</label>
+                              <div className="flex flex-wrap gap-2 mb-2 mt-1">
+                                {(blog.tags || []).map((tag, i) => (
+                                  <span key={i} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                                    {tag}
+                                    <button type="button" className="ml-1 text-gray-500 hover:text-red-500" onClick={() => handleTagRemove(index, tag)}>
+                                      ×
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                              <input
+                                type="text"
+                                className="border p-2 rounded-lg w-full mb-2"
+                                placeholder="태그 입력 후 Enter로 추가"
+                                value={tagInputs[index] || ""}
+                                onChange={e => handleTagInput(index, e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === "Enter" && !(e.nativeEvent as any).isComposing) {
+                                    e.preventDefault();
+                                    const tag = (tagInputs[index] || "").trim();
+                                    setTagInputs(prev => ({ ...prev, [index]: "" }));
+                                    if (tag) handleTagAdd(index, tag);
+                                  }
+                                }}
+                              />
+                              <div className="flex flex-wrap gap-2">
+                                {recommendedTags.map(tag => (
+                                  <button
+                                    key={tag}
+                                    type="button"
+                                    className={`px-3 py-1 rounded-full text-sm border ${blog.tags?.includes(tag) ? 'bg-[#C9DFFF] text-[#4C8CF7] border-indigo-300' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-[#E6EFFF]'}`}
+                                    onClick={() => blog.tags?.includes(tag) ? handleTagRemove(index, tag) : handleTagAdd(index, tag)}
+                                  >
+                                    {tag}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <input
-                          type="text"
-                          className="border p-2 rounded-lg w-full mb-2"
-                          placeholder="태그 입력 후 Enter로 추가"
-                          value={tagInputs[index] || ""}
-                          onChange={e => handleTagInput(index, e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === "Enter" && !(e.nativeEvent as any).isComposing) {
-                              e.preventDefault();
-                              const tag = (tagInputs[index] || "").trim();
-                              setTagInputs(prev => ({ ...prev, [index]: "" }));
-                              if (tag) handleTagAdd(index, tag);
-                            }
-                          }}
-                        />
-                        <div className="flex flex-wrap gap-2">
-                          {recommendedTags.map(tag => (
-                            <button
-                              key={tag}
-                              type="button"
-                              className={`px-3 py-1 rounded-full text-sm border ${blog.tags?.includes(tag) ? 'bg-[#C9DFFF] text-[#4C8CF7] border-indigo-300' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-[#E6EFFF]'}`}
-                              onClick={() => blog.tags?.includes(tag) ? handleTagRemove(index, tag) : handleTagAdd(index, tag)}
-                            >
-                              {tag}
-                            </button>
-                          ))}
-                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </div>
 
                 <button
                   className="mt-8 w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"

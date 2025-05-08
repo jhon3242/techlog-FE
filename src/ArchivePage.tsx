@@ -16,10 +16,10 @@ import { API_BASE_URL } from "./utils/apiConfig";
 const blogTypeLogos: { [key: string]: string } = {
   WOOWABRO: "/images/woowa-icon.png",
   NAVER: "/images/naver-icon.png",
-  LINE: "https://i.namu.wiki/i/4lZMO-XK7Pdyn7A84kBwZyJW_1PwsF53s8AICTYe6nGHEyKmA1tBoKU1ZEclRYRYqkcjvrdp01xpUTB76HD09yf4x597jKS5l9K8XWMoqPjfEJjee0wd8G5rxZluqyUc1nlh2zp1koxmfa9xAcTLjA.svg",
-  KAKAO_PAY: "https://i.namu.wiki/i/e--EGUzVmBMZ97iEgts-8FmlaWmkHnNyFDdg47f2LYky8CGtudl4QI27F-6oXPpOqqIJTbfPUfJcUKyves2_12OQpPjP3mnpM_zYSNYgqRLHnDiU9CSTXdELMIXGpcrC0OTvfX1xUF3M1x9WTmNQNw.svg",
+  LINE: "/images/line-icon.png",
+  KAKAO_PAY: "/images/kakao-pay-icon.png",
   KAKAO: "/images/kakao-icon.png",
-  COUPANG: "https://i.namu.wiki/i/B4-c6bOz5UMSkT2XGouLqwZCLid6bdH94R4v1kBZMBHCTXBFXqWHcoqJ8CNT_TRJHDCFXCp2rHCj_XdnsLcpCmN9qiWOGqXokb-u7k8EAgnCysmkdlnV0ChaZt7UVjNk-z3WAFHDDmy700YiklzXVw.svg"
+  COUPANG: "/images/coupang-icon.png"
 };
 
 const blogTypeColors: { [key: string]: string } = {
