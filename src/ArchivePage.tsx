@@ -314,7 +314,7 @@ function App() {
           : "No summary available",
         imageUrl:
           post.thumbnail ||
-          "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=500",
+          "/images/no-thumbnail.png",
         tags: post.tags || [],
         recommendations: post.recommendations || 0,
         views: post.views || 0,
