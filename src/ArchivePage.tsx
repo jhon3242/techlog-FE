@@ -304,8 +304,10 @@ function App() {
       const res = await fetch(url);
       if (!res.ok) throw new Error();
 
-      const data = await res.json();
-      const transformed = data.map((post: any) => ({
+      const response = await res.json();
+      const { posters, pageable, last, empty } = response;
+      
+      const transformed = posters.map((post: any) => ({
         id: post.id,
         title: post.title,
         company: post.blogType || "Unknown Company",
@@ -314,7 +316,7 @@ function App() {
           : "No summary available",
         imageUrl:
           post.thumbnail ||
-          "/images/no-thumbnail.png",
+          "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=500",
         tags: post.tags || [],
         recommendations: post.recommendations || 0,
         views: post.views || 0,
@@ -330,8 +332,8 @@ function App() {
         setPosts((prev) => [...prev, ...transformed]);
       }
       
-      // 검색 결과가 없거나 size보다 작으면 더 이상 데이터가 없다고 판단
-      setHasMore(data.length === size);
+      // 서버에서 받은 last와 empty 값을 사용하여 더 불러올 데이터가 있는지 판단
+      setHasMore(!last && !empty);
       return true;
     } catch (error) {
       console.error('Error fetching posts:', error);
