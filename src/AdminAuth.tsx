@@ -1,23 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { fetchWithAdminHeader } from './utils/fetchWithAdminHeader';
 
 const AdminAuth: React.FC = () => {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkAdminAccess = async () => {
       try {
+        const adminHeader = localStorage.getItem('X-Admin-Header');
+        if (!adminHeader) {
+          setIsAuthorized(false);
+          setError('관리자 인증 정보가 없습니다.');
+          return;
+        }
+
         const response = await fetchWithAdminHeader('/api/admin');
         if (response.status === 200) {
           setIsAuthorized(true);
+          setError(null);
         } else {
           setIsAuthorized(false);
+          setError('관리자 권한이 없습니다.');
         }
       } catch (error) {
         console.error('Admin authentication error:', error);
         setIsAuthorized(false);
+        setError('서버 연결에 실패했습니다.');
       } finally {
         setIsLoading(false);
       }
@@ -49,10 +61,10 @@ const AdminAuth: React.FC = () => {
             </svg>
             <h2 className="text-2xl font-bold text-gray-800 mt-4">접근 권한 없음</h2>
             <p className="text-gray-600 mt-2">
-              관리자 페이지에 접근할 권한이 없습니다.
+              {error || '관리자 페이지에 접근할 권한이 없습니다.'}
             </p>
             <button 
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/')}
               className="mt-6 bg-[#4C8CF7] hover:bg-[#3A7DE8] text-white font-medium py-2 px-4 rounded transition-colors duration-300"
             >
               홈으로 돌아가기

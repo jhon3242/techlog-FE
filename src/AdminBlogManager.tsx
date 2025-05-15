@@ -99,9 +99,11 @@ function AdminBlogManager() {
       if (!response.ok) throw new Error();
       
       const data = await response.json();
-      setAllPosts(data);
-      setHasNext(data.length === size);
-    } catch {
+      const { posters, pageable, last, empty } = data;
+      setAllPosts(posters || []);
+      setHasNext(!last && !empty);
+    } catch (error) {
+      console.error('Failed to fetch posts:', error);
       setAllPosts([]);
       setHasNext(false);
     }

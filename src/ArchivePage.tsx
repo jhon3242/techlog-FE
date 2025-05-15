@@ -12,166 +12,10 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
 import { API_BASE_URL } from "./utils/apiConfig";
-
-const blogTypeLogos: { [key: string]: string } = {
-  WOOWABRO: "/images/woowa-icon.png",
-  NAVER: "/images/naver-icon.png",
-  LINE: "/images/line-icon.png",
-  KAKAO_PAY: "/images/kakao-pay-icon.png",
-  KAKAO: "/images/kakao-icon.png",
-  COUPANG: "/images/coupang-icon.png"
-};
-
-const blogTypeColors: { [key: string]: string } = {
-  WOOWABRO: "bg-[#03C75A]",
-  NAVER: "bg-[#03C75A]",
-  LINE: "bg-[#00B900]",
-  KAKAO_PAY: "bg-[#FFE600]",
-  KAKAO: "bg-[#FFE600]",
-  COUPANG: "bg-[#FF4E50]"
-};
-
-interface BlogPost {
-  id: number;
-  title: string;
-  company?: string;
-  summary?: string;
-  imageUrl: string;
-  tags?: string[];
-  recommendations?: number;
-  views?: number;
-  brandColor?: string;
-  content?: string;
-  url?: string;
-  blogType?: string;
-}
-
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (url: string) => void;
-  successMessage: string;
-  setSuccessMessage: (message: string) => void;
-}
-
-function RecommendModal({ isOpen, onClose, onSubmit, successMessage, setSuccessMessage }: ModalProps) {
-  const [url, setUrl] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      await onSubmit(url);
-      setSuccessMessage('추천해주셔서 감사합니다!');
-      setTimeout(() => {
-        setSuccessMessage('');
-        onClose();
-      }, 2000);
-    } catch (error) {
-      console.error('추천 등록 실패:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg"
-          >
-            <h2 className="text-xl font-semibold mb-4 text-[#4C8CF7]">블로그 글 추천하기</h2>
-            {successMessage && (
-              <div className="text-green-600 text-center py-4">
-                {successMessage}
-              </div>
-            ) || (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    블로그 URL
-                  </label>
-                  <input
-                    type="url"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#4C8CF7] focus:border-[#4C8CF7]"
-                    placeholder="https://example.com/blog-post"
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !url}
-                    className={`px-4 py-2 text-sm font-medium text-white bg-[#4C8CF7] rounded-md hover:bg-[#3A7DE8] disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {isSubmitting ? '추천 중...' : '추천하기'}
-                  </button>
-                </div>
-              </form>
-            )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-}
-
-class ErrorBoundary extends React.Component<ErrorBoundaryProps> {
-  state = { hasError: false };
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center p-8">
-            <h2 className="text-2xl font-semibold text-red-600 mb-4">오류 발생</h2>
-            <p className="text-gray-600 mb-4">죄송합니다. 페이지를 다시 로드해주세요.</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              다시 로드하기
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
+import { RecommendModal } from "./components/RecommendModal";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { blogTypeLogos, blogTypeColors } from "./constants/blogTypes";
+import { BlogPost, PostersResponse, PosterSearchRequest } from "./types/blog";
 
 function App() {
   // Device ID 생성 및 저장
@@ -216,7 +60,11 @@ function App() {
       }, 2000);
     } catch (error) {
       console.error('추천 등록 실패:', error);
-      setSuccessMessage(`추천 등록 실패: ${error.message}`);
+      if (error instanceof Error) {
+        setSuccessMessage(`추천 등록 실패: ${error.message}`);
+      } else {
+        setSuccessMessage('추천 등록 실패');
+      }
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
@@ -232,8 +80,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(0);
-
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -257,7 +104,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetchPosts(0);
+    fetchPosts(null);
   }, []);
 
   const handleTagToggle = (tag: string) => {
@@ -269,9 +116,10 @@ function App() {
   };
 
   const handleSearch = () => {
-    setPage(0);
+    setPosts([]);
+    setNextCursor(null);
     setHasMore(true);
-    fetchPosts(0);
+    fetchPosts(null);
   };
 
   // 검색 조건이 모두 비어있을 때 자동으로 전체 조회
@@ -281,42 +129,36 @@ function App() {
     }
   }, [searchQuery, selectedBlogType, selectedTags]);
 
-  const fetchPosts = async (currentPage: number): Promise<boolean> => {
+  const fetchPosts = async (cursor: number | null): Promise<boolean> => {
     try {
-      if (currentPage === 0) setLoading(true);
+      if (cursor === null) setLoading(true);
       else setLoadingMore(true);
 
-      let url = `${API_BASE_URL}/api/posters?page=${currentPage}&size=${size}`;
-      if (searchQuery.trim() || selectedBlogType || selectedTags.length > 0) {
-        const params = new URLSearchParams();
-        if (searchQuery.trim()) {
-          params.append('keyword', searchQuery.trim());
-        }
-        if (selectedBlogType) {
-          params.append('blogType', selectedBlogType);
-        }
-        selectedTags.forEach(tag => {
-          params.append('tags', tag);
-        });
-        url = `${API_BASE_URL}/api/search?${params.toString()}`;
-      }
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.append('keyword', searchQuery.trim());
+      if (selectedBlogType) params.append('blogType', selectedBlogType);
+      if (selectedTags.length > 0) selectedTags.forEach(tag => params.append('tags', tag));
+      if (cursor) params.append('cursor', cursor.toString());
 
-      const res = await fetch(url);
-      if (!res.ok) throw new Error();
+      const response = await fetch(`${API_BASE_URL}/api/posters?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
 
-      const response = await res.json();
-      const { posters, pageable, last, empty } = response;
+      if (!response.ok) throw new Error();
       
-      const transformed = posters.map((post: any) => ({
+      const data: PostersResponse = await response.json();
+      
+      const transformed = data.posters.map((post: any) => ({
         id: post.id,
         title: post.title,
         company: post.blogType || "Unknown Company",
         summary: post.content
           ? post.content.substring(0, 150) + "..."
           : "No summary available",
-        imageUrl:
-          post.thumbnail ||
-          "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=500",
+        imageUrl: post.thumbnail || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=500",
         tags: post.tags || [],
         recommendations: post.recommendations || 0,
         views: post.views || 0,
@@ -325,25 +167,25 @@ function App() {
         url: post.url,
         blogType: post.blogType,
       }));
-
-      if (currentPage === 0) {
+      
+      if (cursor === null) {
         setPosts(transformed);
       } else {
-        setPosts((prev) => [...prev, ...transformed]);
+        setPosts(prev => [...prev, ...transformed]);
       }
       
-      // 서버에서 받은 last와 empty 값을 사용하여 더 불러올 데이터가 있는지 판단
-      setHasMore(!last && !empty);
+      setNextCursor(data.nextCursor);
+      setHasMore(data.hasNext);
       return true;
     } catch (error) {
       console.error('Error fetching posts:', error);
-      if (currentPage === 0) {
+      if (cursor === null) {
         setPosts([]);
       }
       setHasMore(false);
       return false;
     } finally {
-      if (currentPage === 0) setLoading(false);
+      if (cursor === null) setLoading(false);
       else setLoadingMore(false);
     }
   };
@@ -353,10 +195,9 @@ function App() {
 
     const observer = new IntersectionObserver(
       async ([entry]) => {
-        if (entry.isIntersecting) {
-          const nextPage = page + 1;
-          const success = await fetchPosts(nextPage);
-          if (success) setPage(nextPage);
+        if (entry.isIntersecting && nextCursor !== null) {
+          const success = await fetchPosts(nextCursor);
+          if (!success) setLoadError(true);
         }
       },
       { threshold: 1.0 }
@@ -364,7 +205,7 @@ function App() {
 
     observer.observe(observerRef.current);
     return () => observer.disconnect();
-  }, [page, loadingMore, hasMore, loadError]);
+  }, [nextCursor, loadingMore, hasMore, loadError]);
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 300);
@@ -587,7 +428,11 @@ function App() {
                 >
                   {/* 썸네일 */}
                   <div className="bg-gray-200">
-                    <img src={post.imageUrl} alt={post.title} className="w-full h-64 object-cover" />
+                    <img 
+                      src={post.imageUrl} 
+                      alt={post.title} 
+                      className="w-full h-64 object-cover"
+                    />
                   </div>
                   {/* 본문 */}
                   <div className="p-7 pb-5 flex flex-col flex-1 border-t border-gray-100 bg-[#F5F6FA]">
