@@ -8,6 +8,7 @@ import {
   ArrowUp,
   Heart,
   MessageCircle,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
@@ -522,7 +523,7 @@ function App() {
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              className="bg-white max-w-4xl w-full rounded-xl overflow-hidden shadow-xl"
+              className="bg-white max-w-[90%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-[65%] xl:max-w-4xl w-full rounded-xl overflow-hidden shadow-xl max-h-[90vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               {selectedPost.imageUrl && (
@@ -530,45 +531,56 @@ function App() {
                   <img
                     src={selectedPost.imageUrl}
                     alt={selectedPost.title}
-                    className="h-80 w-full object-cover"
+                    className="h-40 sm:h-48 md:h-56 lg:h-64 xl:h-80 w-full object-cover"
                   />
-                  {selectedPost.blogType && blogTypeLogos[selectedPost.blogType] && (
-                    <div className="absolute top-4 right-4 p-2 bg-white/90 rounded-lg shadow-sm transition-transform duration-200 hover:scale-110">
-                      <img
-                        src={blogTypeLogos[selectedPost.blogType]}
-                        alt={`${selectedPost.blogType} logo`}
-                        className={
-                          selectedPost.blogType === 'NAVER'
-                            ? 'w-8 h-8 object-cover'
-                            : selectedPost.blogType === 'WOOWABRO'
-                              ? 'w-7 h-7 object-contain'
-                              : 'w-8 h-8 object-contain'
-                        }
-                      />
-                    </div>
-                  )}
+                  <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between items-center">
+                    {selectedPost.blogType && blogTypeLogos[selectedPost.blogType] && (
+                      <div className="p-1.5 sm:p-2 bg-white/90 rounded-lg shadow-sm transition-transform duration-200 hover:scale-110">
+                        <img
+                          src={blogTypeLogos[selectedPost.blogType]}
+                          alt={`${selectedPost.blogType} logo`}
+                          className={
+                            selectedPost.blogType === 'NAVER'
+                              ? 'w-6 h-6 sm:w-8 sm:h-8 object-cover'
+                              : selectedPost.blogType === 'WOOWABRO'
+                                ? 'w-5 h-5 sm:w-7 sm:h-7 object-contain'
+                                : 'w-6 h-6 sm:w-8 sm:h-8 object-contain'
+                          }
+                        />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        setSelectedPost(null);
+                        requestAnimationFrame(() => window.scrollTo(0, scrollPosition));
+                      }}
+                      className="p-1.5 sm:p-2 bg-white/90 rounded-lg shadow-sm hover:bg-white transition-colors duration-200"
+                    >
+                      <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+                    </button>
+                  </div>
                 </div>
               )}
-              <div className="p-8">
-                <h1 className="text-3xl font-bold mb-4">
+              <div className="p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4">
                   {selectedPost.title}
                 </h1>
-                <div className="text-gray-700 whitespace-pre-wrap">
+                <div className="text-sm sm:text-base text-gray-700 whitespace-pre-wrap">
                   {selectedPost.content}
                 </div>
                 {selectedPost.url && (
-                  <div className="mt-8 text-center">
+                  <div className="mt-6 sm:mt-8 text-center">
                     <a
                       href={selectedPost.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block bg-[#4C8CF7] text-white px-6 py-3 rounded-lg hover:bg-[#3A7DE8]"
+                      className="inline-block bg-[#4C8CF7] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-[#3A7DE8] text-sm sm:text-base"
                     >
                       원문 보기 🔗
                     </a>
                   </div>
                 )}
-                <div className="flex justify-between mt-8 pt-6 border-t">
+                <div className="flex justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t">
                   <div className="flex items-center space-x-1 text-[#4C8CF7]">
                     <button
                       onClick={e => {
@@ -580,13 +592,13 @@ function App() {
                       }`}
                       aria-label="추천하기"
                     >
-                      <Heart className="h-5 w-5" />
+                      <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
-                    <span>{selectedPost.recommendations}</span>
+                    <span className="text-sm sm:text-base">{selectedPost.recommendations}</span>
                   </div>
                   <div className="flex items-center space-x-1 text-gray-600">
-                    <Eye className="h-5 w-5" />
-                    <span>{selectedPost.views}</span>
+                    <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="text-sm sm:text-base">{selectedPost.views}</span>
                   </div>
                 </div>
               </div>
