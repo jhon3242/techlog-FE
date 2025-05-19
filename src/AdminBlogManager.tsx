@@ -5,6 +5,7 @@ import { BookMarked, PlusCircle, ChevronLeft, ChevronRight, Trash2, X } from "lu
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from './utils/apiConfig';
 import { blogTypeLogos, blogTypeColors } from './constants/blogTypes';
+import { motion, AnimatePresence } from "framer-motion";
 
 interface BlogResponse {
   title: string;
@@ -733,12 +734,22 @@ function AdminBlogManager() {
                             </div>
                             <div>
                               <label className="font-semibold">Blog URL</label>
-                              <input
-                                type="text"
-                                className="w-full border p-2 rounded-lg"
-                                value={blog.url}
-                                onChange={(e) => handleChange(index, 'url', e.target.value)}
-                              />
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={blog.url}
+                                  onChange={(e) => handleChange(index, 'url', e.target.value)}
+                                  className="flex-1 border p-2 rounded-lg"
+                                />
+                                <a
+                                  href={blog.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-4 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8] flex items-center gap-2"
+                                >
+                                  원문 보기 🔗
+                                </a>
+                              </div>
                             </div>
                             <div>
                               <label className="font-semibold">Blog Type</label>
@@ -900,168 +911,192 @@ function AdminBlogManager() {
       </div>
 
       {/* Edit Modal */}
-      {isEditModalOpen && selectedPost && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">포스트 수정</h2>
-                <button
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block font-semibold mb-2">제목</label>
-                  <input
-                    type="text"
-                    value={editForm.title}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full border p-2 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-2">썸네일 URL</label>
-                  <input
-                    type="text"
-                    value={editForm.thumbnail}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, thumbnail: e.target.value }))}
-                    className="w-full border p-2 rounded-lg"
-                  />
-                  {editForm.thumbnail && (
-                    <div className="mt-2 w-full h-48 overflow-hidden rounded-lg border">
-                      <img 
-                        src={editForm.thumbnail} 
-                        alt="thumbnail" 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-2">내용</label>
-                  <textarea
-                    value={editForm.content}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
-                    rows={6}
-                    className="w-full border p-2 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-2">URL</label>
-                  <input
-                    type="text"
-                    value={editForm.url}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, url: e.target.value }))}
-                    className="w-full border p-2 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-2">블로그 타입</label>
-                  <select
-                    value={editForm.blogType}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, blogType: e.target.value }))}
-                    className="w-full border p-2 rounded-lg"
-                  >
-                    <option value="">선택</option>
-                    {blogTypes.map(type => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-2">태그</label>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {editForm.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="bg-[#ede9fe] text-[#6d28d9] px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"
-                      >
-                        {tag}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditTagRemove(tag);
-                          }}
-                          className="ml-1 text-[#6d28d9] hover:text-[#4c1d95]"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 mb-4">
-                    <input
-                      type="text"
-                      value={newEditTag}
-                      onChange={(e) => setNewEditTag(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-                          e.preventDefault();
-                          handleNewEditTagAdd();
-                        }
-                      }}
-                      placeholder="새 태그 입력 후 Enter"
-                      className="flex-1 border p-2 rounded-lg"
-                    />
-                    <button
-                      onClick={handleNewEditTagAdd}
-                      className="px-4 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8]"
-                    >
-                      추가
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {recommendedTags.map(tag => (
-                      <button
-                        key={tag}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditTagAdd(tag);
-                        }}
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          editForm.tags.includes(tag)
-                            ? 'bg-[#C9DFFF] text-[#4C8CF7]'
-                            : 'bg-gray-100 text-gray-600 hover:bg-[#E6EFFF]'
-                        }`}
-                      >
-                        {tag}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-4 mt-8">
+      <AnimatePresence>
+        {isEditModalOpen && selectedPost && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={() => setIsEditModalOpen(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">포스트 수정</h2>
                   <button
                     onClick={() => setIsEditModalOpen(false)}
-                    className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                    className="p-2 hover:bg-gray-100 rounded-lg"
                   >
-                    취소
-                  </button>
-                  <button
-                    onClick={handleUpdatePost}
-                    className="px-4 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8]"
-                  >
-                    저장
+                    <X className="w-6 h-6" />
                   </button>
                 </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block font-semibold mb-2">제목</label>
+                    <input
+                      type="text"
+                      value={editForm.title}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full border p-2 rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-2">썸네일 URL</label>
+                    <input
+                      type="text"
+                      value={editForm.thumbnail}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, thumbnail: e.target.value }))}
+                      className="w-full border p-2 rounded-lg"
+                    />
+                    {editForm.thumbnail && (
+                      <div className="mt-2 w-full h-48 overflow-hidden rounded-lg border">
+                        <img 
+                          src={editForm.thumbnail} 
+                          alt="thumbnail" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-2">내용</label>
+                    <textarea
+                      value={editForm.content}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
+                      rows={6}
+                      className="w-full border p-2 rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-2">URL</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={editForm.url}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, url: e.target.value }))}
+                        className="flex-1 border p-2 rounded-lg"
+                      />
+                      <a
+                        href={editForm.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8] flex items-center gap-2"
+                      >
+                        원문 보기 🔗
+                      </a>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-2">블로그 타입</label>
+                    <select
+                      value={editForm.blogType}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, blogType: e.target.value }))}
+                      className="w-full border p-2 rounded-lg"
+                    >
+                      <option value="">선택</option>
+                      {blogTypes.map(type => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-2">태그</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {editForm.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="bg-[#ede9fe] text-[#6d28d9] px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"
+                        >
+                          {tag}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditTagRemove(tag);
+                            }}
+                            className="ml-1 text-[#6d28d9] hover:text-[#4c1d95]"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 mb-4">
+                      <input
+                        type="text"
+                        value={newEditTag}
+                        onChange={(e) => setNewEditTag(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                            e.preventDefault();
+                            handleNewEditTagAdd();
+                          }
+                        }}
+                        placeholder="새 태그 입력 후 Enter"
+                        className="flex-1 border p-2 rounded-lg"
+                      />
+                      <button
+                        onClick={handleNewEditTagAdd}
+                        className="px-4 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8]"
+                      >
+                        추가
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {recommendedTags.map(tag => (
+                        <button
+                          key={tag}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditTagAdd(tag);
+                          }}
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            editForm.tags.includes(tag)
+                              ? 'bg-[#C9DFFF] text-[#4C8CF7]'
+                              : 'bg-gray-100 text-gray-600 hover:bg-[#E6EFFF]'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-4 mt-8">
+                    <button
+                      onClick={() => setIsEditModalOpen(false)}
+                      className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                    >
+                      취소
+                    </button>
+                    <button
+                      onClick={handleUpdatePost}
+                      className="px-4 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8]"
+                    >
+                      저장
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
