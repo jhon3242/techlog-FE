@@ -8,7 +8,7 @@ export const blogTypeLogos: { [key: string]: string } = {
 };
 
 export const blogTypeColors: { [key: string]: string } = {
-  WOOWABRO: "bg-[#03C75A]",
+  WOOWABRO: "bg-[#40E0D0]",
   NAVER: "bg-[#03C75A]",
   LINE: "bg-[#00B900]",
   KAKAO_PAY: "bg-[#FFE600]",

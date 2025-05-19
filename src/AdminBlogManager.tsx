@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchWithAdminHeader } from './utils/fetchWithAdminHeader';
 import AdminRecommendManager from './AdminRecommendManager';
-import { BookMarked, PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookMarked, PlusCircle, ChevronLeft, ChevronRight, Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from './utils/apiConfig';
+import { blogTypeLogos, blogTypeColors } from './constants/blogTypes';
 
 interface BlogResponse {
   title: string;
@@ -45,9 +46,24 @@ function AdminBlogManager() {
   const [selectedBlogType, setSelectedBlogType] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [loadingMore, setLoadingMore] = useState(false);
+  const observerRef = useRef<HTMLDivElement | null>(null);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
 
   const [currentBlogIndex, setCurrentBlogIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
+
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    thumbnail: '',
+    content: '',
+    url: '',
+    blogType: '',
+    tags: [] as string[]
+  });
+  const [newEditTag, setNewEditTag] = useState('');
 
   // 태그 목록 불러오기
   useEffect(() => {
@@ -67,7 +83,7 @@ function AdminBlogManager() {
 
   const handleSearch = () => {
     setPage(0);
-    fetchPosts(0);
+    fetchPosts(null);
   };
 
   // 검색 조건이 모두 비어있을 때 자동으로 전체 조회
@@ -77,58 +93,89 @@ function AdminBlogManager() {
     }
   }, [postSearch, selectedBlogType, selectedTags]);
 
-  // 등록된 포스트 목록 불러오기 (페이지네이션)
-  const fetchPosts = async (currentPage: number) => {
+  // 등록된 포스트 목록 불러오기 (무한 스크롤)
+  const fetchPosts = async (cursor: number | null) => {
     try {
-      let url = `/api/posters?page=${currentPage}&size=${size}`;
-      if (postSearch.trim() || selectedBlogType || selectedTags.length > 0) {
-        const params = new URLSearchParams();
-        if (postSearch.trim()) {
-          params.append('keyword', postSearch.trim());
-        }
-        if (selectedBlogType) {
-          params.append('blogType', selectedBlogType);
-        }
-        selectedTags.forEach(tag => {
-          params.append('tags', tag);
-        });
-        url = `/api/search?${params.toString()}`;
-      }
+      if (cursor === null) setLoading(true);
+      else setLoadingMore(true);
 
-      const response = await fetchWithAdminHeader(url);
+      const params = new URLSearchParams();
+      if (postSearch.trim()) params.append('keyword', postSearch.trim());
+      if (selectedBlogType) params.append('blogType', selectedBlogType);
+      if (selectedTags.length > 0) selectedTags.forEach(tag => params.append('tags', tag));
+      if (cursor) params.append('cursor', cursor.toString());
+
+      const response = await fetchWithAdminHeader(`/api/posters?${params.toString()}`);
       if (!response.ok) throw new Error();
       
       const data = await response.json();
-      const { posters, pageable, last, empty } = data;
-      setAllPosts(posters || []);
-      setHasNext(!last && !empty);
+      const { posters, nextCursor, hasNext } = data;
+      
+      if (cursor === null) {
+        setAllPosts(posters || []);
+      } else {
+        setAllPosts(prev => [...prev, ...(posters || [])]);
+      }
+      
+      setNextCursor(nextCursor);
+      setHasNext(hasNext);
     } catch (error) {
       console.error('Failed to fetch posts:', error);
-      setAllPosts([]);
+      if (cursor === null) {
+        setAllPosts([]);
+      }
       setHasNext(false);
+    } finally {
+      if (cursor === null) setLoading(false);
+      else setLoadingMore(false);
     }
   };
 
+  // 스켈레톤 UI 렌더링
+  const renderSkeleton = (count: number) => {
+    return Array(count).fill(0).map((_, index) => (
+      <div key={index} className="rounded-2xl overflow-hidden shadow bg-white flex flex-col max-w-xl mx-auto border border-gray-100 mb-8 animate-pulse">
+        <div className="bg-gray-200 h-64"></div>
+        <div className="p-7 pb-5 flex flex-col flex-1 border-t border-gray-100 bg-[#F5F6FA]">
+          <div className="flex gap-2 mb-4">
+            <div className="w-20 h-6 bg-gray-200 rounded-full"></div>
+            <div className="w-20 h-6 bg-gray-200 rounded-full"></div>
+          </div>
+          <div className="h-8 bg-gray-200 rounded mb-2"></div>
+          <div className="h-24 bg-gray-200 rounded mb-6"></div>
+          <div className="flex items-center justify-between mt-auto">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+              <div className="w-24 h-6 bg-gray-200 rounded-full"></div>
+            </div>
+            <div className="w-20 h-6 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    ));
+  };
+
   useEffect(() => {
-    if (activeTab === 'blogs') {
-      fetchPosts(page);
-    }
-  }, [activeTab, page]);
+    if (!observerRef.current || loadingMore || !hasNext) return;
+
+    const observer = new IntersectionObserver(
+      async ([entry]) => {
+        if (entry.isIntersecting && nextCursor !== null) {
+          await fetchPosts(nextCursor);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [nextCursor, loadingMore, hasNext]);
 
   const handleDeletePost = async (id: number) => {
     if (!window.confirm('정말 삭제하시겠습니까?')) return;
     await fetchWithAdminHeader(`/api/posters/${id}`, { method: 'DELETE' });
     setAllPosts(posts => posts.filter(p => p.id !== id));
   };
-
-  // 페이지네이션 버튼 생성 (최근 5페이지만)
-  const pageButtons = [];
-  const startPage = Math.max(0, page - 2);
-  for (let i = startPage; i <= page + 2; i++) {
-    if (i === page || (i < page && i >= 0) || (i > page && (i === page + 1 && hasNext))) {
-      pageButtons.push(i);
-    }
-  }
 
   const handleFetchBlogs = async () => {
     try {
@@ -297,6 +344,88 @@ function AdminBlogManager() {
     setCurrentBlogIndex(prev => (prev < blogs.length - 1 ? prev + 1 : 0));
   };
 
+  const handleEditPost = async (post: any) => {
+    setSelectedPost(post);
+    setEditForm({
+      title: post.title,
+      thumbnail: post.thumbnail || '',
+      content: post.content,
+      url: post.url,
+      blogType: post.blogType,
+      tags: post.tags || []
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdatePost = async () => {
+    try {
+      const response = await fetchWithAdminHeader(`/api/posters/${selectedPost.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      });
+
+      if (!response.ok) throw new Error('Failed to update post');
+
+      // Update the post in the list
+      setAllPosts(posts => posts.map(p => 
+        p.id === selectedPost.id ? { ...p, ...editForm } : p
+      ));
+
+      setIsEditModalOpen(false);
+      setSelectedPost(null);
+    } catch (error) {
+      console.error('Failed to update post:', error);
+      alert('포스트 업데이트에 실패했습니다.');
+    }
+  };
+
+  const handleEditTagAdd = (tag: string) => {
+    const processedTag = /^[a-zA-Z]+$/.test(tag) ? tag.toUpperCase() : tag;
+    if (!editForm.tags.includes(processedTag)) {
+      setEditForm(prev => ({
+        ...prev,
+        tags: [...prev.tags, processedTag]
+      }));
+    }
+  };
+
+  const handleEditTagRemove = (tag: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      tags: prev.tags.filter(t => t !== tag)
+    }));
+  };
+
+  const handleNewEditTagAdd = async () => {
+    if (!newEditTag.trim()) return;
+    const processedTag = /^[a-zA-Z]+$/.test(newEditTag) ? newEditTag.toUpperCase() : newEditTag;
+    
+    if (!editForm.tags.includes(processedTag)) {
+      setEditForm(prev => ({
+        ...prev,
+        tags: [...prev.tags, processedTag]
+      }));
+
+      // Add to recommended tags if it's a new tag
+      if (!recommendedTags.includes(processedTag)) {
+        try {
+          const res = await fetchWithAdminHeader('/api/tag', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: processedTag })
+          });
+          if (res.ok) {
+            setRecommendedTags(prev => [...prev, processedTag]);
+          }
+        } catch (error) {
+          console.error('Failed to add new tag:', error);
+        }
+      }
+    }
+    setNewEditTag('');
+  };
+
   return (
     <div className="min-h-screen relative">
       <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10">
@@ -403,54 +532,90 @@ function AdminBlogManager() {
                   ))}
                 </div>
               </div>
-              <table className="w-full border text-sm">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border p-2">제목</th>
-                    <th className="border p-2">링크</th>
-                    <th className="border p-2">관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allPosts.map(post => (
-                    <tr key={post.id}>
-                      <td className="border p-2">{post.title}</td>
-                      <td className="border p-2 text-blue-600 underline">
-                        <a href={post.url} target="_blank" rel="noopener noreferrer">Link</a>
-                      </td>
-                      <td className="border p-2">
-                        <button
-                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                          onClick={() => handleDeletePost(post.id)}
-                        >
-                          삭제
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="flex justify-center mt-4 space-x-2">
-                {page > 0 && (
-                  <button className="px-3 py-1 rounded bg-gray-200" onClick={() => setPage(page - 1)}>
-                    이전
-                  </button>
-                )}
-                {pageButtons.map(idx => (
-                  <button
-                    key={idx}
-                    className={`px-3 py-1 rounded ${page === idx ? 'bg-[#4C8CF7] text-white' : 'bg-gray-200'}`}
-                    onClick={() => setPage(idx)}
-                    disabled={idx < 0}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {allPosts.map(post => (
+                  <div
+                    key={post.id}
+                    className="rounded-2xl overflow-hidden shadow bg-white flex flex-col max-w-xl mx-auto border border-gray-100 mb-8 transition hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
+                    onClick={() => handleEditPost(post)}
                   >
-                    {idx + 1}
-                  </button>
+                    {/* 썸네일 */}
+                    <div className="bg-gray-200 relative">
+                      <img 
+                        src={post.thumbnail || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=500"} 
+                        alt={post.title} 
+                        className="w-full h-64 object-cover"
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePost(post.id);
+                        }}
+                        className="absolute top-3 right-3 p-2 bg-white/90 rounded-lg shadow-sm hover:bg-white transition-colors duration-200"
+                      >
+                        <Trash2 className="w-5 h-5 text-red-500" />
+                      </button>
+                    </div>
+                    {/* 본문 */}
+                    <div className="p-7 pb-5 flex flex-col flex-1 border-t border-gray-100 bg-[#F5F6FA]">
+                      {/* 키워드(태그) */}
+                      <div className="flex gap-2 mb-4">
+                        {(post.tags || []).map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="px-4 py-1 rounded-full text-sm font-medium bg-[#ede9fe] text-[#6d28d9]"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      {/* 제목 */}
+                      <h3 className="text-2xl font-bold mb-2 text-gray-900">{post.title}</h3>
+                      {/* 본문 */}
+                      <p className="text-gray-600 text-base mb-6 line-clamp-3">{post.content?.substring(0, 150) + "..."}</p>
+                      {/* 회사/작성자/추천/조회 */}
+                      <div className="flex items-center justify-between mt-auto">
+                        <div className="flex items-center gap-2">
+                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                            {post.blogType && blogTypeLogos[post.blogType] && (
+                              <img
+                                src={blogTypeLogos[post.blogType]}
+                                alt={post.blogType}
+                                className={
+                                  post.blogType === 'NAVER'
+                                    ? 'w-full h-full object-cover'
+                                    : post.blogType === 'WOOWABRO'
+                                      ? 'w-8 h-8 object-contain'
+                                      : 'w-7 h-7 object-contain'
+                                }
+                              />
+                            )}
+                          </div>
+                          <span
+                            className={`px-4 py-1 rounded-full text-sm font-semibold ${blogTypeColors[post.blogType || ''] || 'bg-gray-200'}`}
+                          >
+                            {post.blogType === 'WOOWABRO' ? '우아한형제들' :
+                             post.blogType === 'NAVER' ? '네이버' :
+                             post.blogType === 'LINE' ? '라인' :
+                             post.blogType === 'KAKAO_PAY' ? '카카오페이' :
+                             post.blogType === 'KAKAO' ? '카카오' :
+                             post.blogType === 'COUPANG' ? '쿠팡' : post.blogType}
+                          </span>
+                        </div>
+                        <a
+                          href={post.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#4C8CF7] hover:underline"
+                        >
+                          원문 보기
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-                {hasNext && (
-                  <button className="px-3 py-1 rounded bg-gray-200" onClick={() => setPage(page + 1)}>
-                    다음
-                  </button>
-                )}
+                {loadingMore && renderSkeleton(3)}
+                <div ref={observerRef} className="h-1"></div>
               </div>
             </div>
 
@@ -601,7 +766,10 @@ function AdminBlogManager() {
                                 {(blog.tags || []).map((tag, i) => (
                                   <span key={i} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
                                     {tag}
-                                    <button type="button" className="ml-1 text-gray-500 hover:text-red-500" onClick={() => handleTagRemove(index, tag)}>
+                                    <button type="button" className="ml-1 text-gray-500 hover:text-red-500" onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleTagRemove(index, tag);
+                                    }}>
                                       ×
                                     </button>
                                   </span>
@@ -612,11 +780,16 @@ function AdminBlogManager() {
                                 className="border p-2 rounded-lg w-full mb-2"
                                 placeholder="태그 입력 후 Enter로 추가"
                                 value={tagInputs[index] || ""}
-                                onChange={e => handleTagInput(index, e.target.value)}
+                                onChange={e => {
+                                  e.preventDefault();
+                                  const tag = (e.target as HTMLInputElement).value.trim();
+                                  setTagInputs(prev => ({ ...prev, [index]: "" }));
+                                  if (tag) handleTagAdd(index, tag);
+                                }}
                                 onKeyDown={e => {
                                   if (e.key === "Enter" && !(e.nativeEvent as any).isComposing) {
                                     e.preventDefault();
-                                    const tag = (tagInputs[index] || "").trim();
+                                    const tag = (e.target as HTMLInputElement).value.trim();
                                     setTagInputs(prev => ({ ...prev, [index]: "" }));
                                     if (tag) handleTagAdd(index, tag);
                                   }
@@ -628,7 +801,10 @@ function AdminBlogManager() {
                                     key={tag}
                                     type="button"
                                     className={`px-3 py-1 rounded-full text-sm border ${blog.tags?.includes(tag) ? 'bg-[#C9DFFF] text-[#4C8CF7] border-indigo-300' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-[#E6EFFF]'}`}
-                                    onClick={() => blog.tags?.includes(tag) ? handleTagRemove(index, tag) : handleTagAdd(index, tag)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      blog.tags?.includes(tag) ? handleTagRemove(index, tag) : handleTagAdd(index, tag);
+                                    }}
                                   >
                                     {tag}
                                   </button>
@@ -722,6 +898,170 @@ function AdminBlogManager() {
           </div>
         )}
       </div>
+
+      {/* Edit Modal */}
+      {isEditModalOpen && selectedPost && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">포스트 수정</h2>
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block font-semibold mb-2">제목</label>
+                  <input
+                    type="text"
+                    value={editForm.title}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full border p-2 rounded-lg"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-2">썸네일 URL</label>
+                  <input
+                    type="text"
+                    value={editForm.thumbnail}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, thumbnail: e.target.value }))}
+                    className="w-full border p-2 rounded-lg"
+                  />
+                  {editForm.thumbnail && (
+                    <div className="mt-2 w-full h-48 overflow-hidden rounded-lg border">
+                      <img 
+                        src={editForm.thumbnail} 
+                        alt="thumbnail" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-2">내용</label>
+                  <textarea
+                    value={editForm.content}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
+                    rows={6}
+                    className="w-full border p-2 rounded-lg"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-2">URL</label>
+                  <input
+                    type="text"
+                    value={editForm.url}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, url: e.target.value }))}
+                    className="w-full border p-2 rounded-lg"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-2">블로그 타입</label>
+                  <select
+                    value={editForm.blogType}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, blogType: e.target.value }))}
+                    className="w-full border p-2 rounded-lg"
+                  >
+                    <option value="">선택</option>
+                    {blogTypes.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-2">태그</label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {editForm.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="bg-[#ede9fe] text-[#6d28d9] px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"
+                      >
+                        {tag}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditTagRemove(tag);
+                          }}
+                          className="ml-1 text-[#6d28d9] hover:text-[#4c1d95]"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="text"
+                      value={newEditTag}
+                      onChange={(e) => setNewEditTag(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                          e.preventDefault();
+                          handleNewEditTagAdd();
+                        }
+                      }}
+                      placeholder="새 태그 입력 후 Enter"
+                      className="flex-1 border p-2 rounded-lg"
+                    />
+                    <button
+                      onClick={handleNewEditTagAdd}
+                      className="px-4 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8]"
+                    >
+                      추가
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {recommendedTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditTagAdd(tag);
+                        }}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          editForm.tags.includes(tag)
+                            ? 'bg-[#C9DFFF] text-[#4C8CF7]'
+                            : 'bg-gray-100 text-gray-600 hover:bg-[#E6EFFF]'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-4 mt-8">
+                  <button
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleUpdatePost}
+                    className="px-4 py-2 bg-[#4C8CF7] text-white rounded-lg hover:bg-[#3A7DE8]"
+                  >
+                    저장
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
