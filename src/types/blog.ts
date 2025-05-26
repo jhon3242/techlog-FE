@@ -31,5 +31,5 @@ export interface PosterSearchRequest {
   keyword?: string;
   tags?: string[];
   blogType?: string;
-  cursor?: number;
+  cursor?: string;
 } 

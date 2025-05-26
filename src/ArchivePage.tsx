@@ -81,7 +81,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -130,7 +130,7 @@ function App() {
     }
   }, [searchQuery, selectedBlogType, selectedTags]);
 
-  const fetchPosts = async (cursor: number | null): Promise<boolean> => {
+  const fetchPosts = async (cursor: string | null): Promise<boolean> => {
     try {
       if (cursor === null) setLoading(true);
       else setLoadingMore(true);
@@ -139,7 +139,7 @@ function App() {
       if (searchQuery.trim()) params.append('keyword', searchQuery.trim());
       if (selectedBlogType) params.append('blogType', selectedBlogType);
       if (selectedTags.length > 0) selectedTags.forEach(tag => params.append('tags', tag));
-      if (cursor) params.append('cursor', cursor.toString());
+      if (cursor) params.append('cursor', cursor);
 
       const response = await fetch(`${API_BASE_URL}/api/posters?${params.toString()}`, {
         method: 'GET',

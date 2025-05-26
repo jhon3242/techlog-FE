@@ -49,7 +49,7 @@ function AdminBlogManager() {
   const [newTag, setNewTag] = useState('');
   const [loadingMore, setLoadingMore] = useState(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
-  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
 
   const [currentBlogIndex, setCurrentBlogIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -95,7 +95,7 @@ function AdminBlogManager() {
   }, [postSearch, selectedBlogType, selectedTags]);
 
   // 등록된 포스트 목록 불러오기 (무한 스크롤)
-  const fetchPosts = async (cursor: number | null) => {
+  const fetchPosts = async (cursor: string | null) => {
     try {
       if (cursor === null) setLoading(true);
       else setLoadingMore(true);
@@ -104,7 +104,7 @@ function AdminBlogManager() {
       if (postSearch.trim()) params.append('keyword', postSearch.trim());
       if (selectedBlogType) params.append('blogType', selectedBlogType);
       if (selectedTags.length > 0) selectedTags.forEach(tag => params.append('tags', tag));
-      if (cursor) params.append('cursor', cursor.toString());
+      if (cursor) params.append('cursor', cursor);
 
       const response = await fetchWithAdminHeader(`/api/posters?${params.toString()}`);
       if (!response.ok) throw new Error();
