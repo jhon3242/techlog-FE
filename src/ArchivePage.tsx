@@ -32,6 +32,7 @@ function App() {
   const [selectedBlogType, setSelectedBlogType] = useState<string>("");
   const [isRecommendModalOpen, setIsRecommendModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const handleRecommendClick = () => {
     setIsRecommendModalOpen(true);
@@ -105,7 +106,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetchPosts(null);
+    fetchPosts(null).then(() => {
+      setIsInitialLoad(false);
+    });
   }, []);
 
   const handleTagToggle = (tag: string) => {
@@ -175,7 +178,7 @@ function App() {
         setPosts(prev => [...prev, ...transformed]);
       }
       
-      setNextCursor(data.nextCursor);
+      setNextCursor(data.nextCursor?.toString() || null);
       setHasMore(data.hasNext);
       return true;
     } catch (error) {
@@ -201,7 +204,7 @@ function App() {
           if (!success) setLoadError(true);
         }
       },
-      { threshold: 1.0 }
+      { threshold: 0.1, rootMargin: '100px' }
     );
 
     observer.observe(observerRef.current);
@@ -349,7 +352,7 @@ function App() {
           transition={{ duration: 0.5 }}
           className="text-4xl font-bold text-center mb-4"
         >
-          Discover Engineering Excellence
+          Find insight. Techlog
         </motion.h1>
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -441,7 +444,10 @@ function App() {
                   key={post.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.6 + (index * 0.1) }}
+                  transition={{ 
+                    duration: isInitialLoad ? 0.5 : 0.2,
+                    delay: isInitialLoad ? 0.6 + (index * 0.1) : 0
+                  }}
                   className="rounded-2xl overflow-hidden shadow bg-white flex flex-col max-w-xl mx-auto border border-gray-100 mb-8 transition hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
                   onClick={() => handlePostClick(post)}
                 >
@@ -526,8 +532,24 @@ function App() {
                 </motion.div>
               );
             })}
-        {loadingMore && renderSkeleton(3)}
-        <div ref={observerRef} className="h-1"></div>
+        {loadingMore && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="col-span-full flex justify-center items-center py-8"
+          >
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 border-4 border-[#4C8CF7] border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-gray-600">더 많은 글을 불러오는 중...</p>
+            </div>
+          </motion.div>
+        )}
+        <div 
+          ref={observerRef} 
+          className="h-10 w-full"
+          style={{ visibility: hasMore ? 'visible' : 'hidden' }}
+        />
       </div>
 
       <AnimatePresence>
