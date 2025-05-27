@@ -158,6 +158,40 @@ function App() {
     }
   }, [searchQuery, selectedBlogType, selectedTags]);
 
+  useEffect(() => {
+    if (!observerRef.current || loadingMore || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      async ([entry]) => {
+        if (entry.isIntersecting && nextCursor !== null) {
+          try {
+            setLoadingMore(true);
+            const success = await fetchPosts(nextCursor);
+            if (!success) {
+              console.error('Failed to fetch more posts');
+              // 에러 발생 시 3초 후에 다시 시도
+              setTimeout(() => {
+                setLoadError(false);
+              }, 3000);
+            }
+          } catch (error) {
+            console.error('Error in intersection observer:', error);
+            setLoadError(true);
+          } finally {
+            setLoadingMore(false);
+          }
+        }
+      },
+      { 
+        threshold: 0.5,  // 요소가 50% 보일 때 트리거
+        rootMargin: '200px'  // 더 일찍 로딩 시작
+      }
+    );
+
+    observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [nextCursor, loadingMore, hasMore]);
+
   const fetchPosts = async (cursor: string | null): Promise<boolean> => {
     try {
       if (cursor === null) setLoading(true);
@@ -176,7 +210,9 @@ function App() {
         }
       });
 
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
       const data: PostersResponse = await response.json();
       
@@ -205,6 +241,7 @@ function App() {
       
       setNextCursor(data.nextCursor?.toString() || null);
       setHasMore(data.hasNext);
+      setLoadError(false);
       return true;
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -212,29 +249,13 @@ function App() {
         setPosts([]);
       }
       setHasMore(false);
+      setLoadError(true);
       return false;
     } finally {
       if (cursor === null) setLoading(false);
       else setLoadingMore(false);
     }
   };
-
-  useEffect(() => {
-    if (!observerRef.current || loadingMore || !hasMore || loadError) return;
-
-    const observer = new IntersectionObserver(
-      async ([entry]) => {
-        if (entry.isIntersecting && nextCursor !== null) {
-          const success = await fetchPosts(nextCursor);
-          if (!success) setLoadError(true);
-        }
-      },
-      { threshold: 0.1, rootMargin: '100px' }
-    );
-
-    observer.observe(observerRef.current);
-    return () => observer.disconnect();
-  }, [nextCursor, loadingMore, hasMore, loadError]);
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 300);
