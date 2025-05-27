@@ -159,17 +159,31 @@ function App() {
   }, [searchQuery, selectedBlogType, selectedTags]);
 
   useEffect(() => {
-    if (!observerRef.current || loadingMore || !hasMore) return;
+    if (!observerRef.current || loadingMore || !hasMore) {
+      console.log('Observer not initialized:', {
+        hasObserverRef: !!observerRef.current,
+        loadingMore,
+        hasMore
+      });
+      return;
+    }
 
+    console.log('Setting up intersection observer');
     const observer = new IntersectionObserver(
       async ([entry]) => {
+        console.log('Intersection observer triggered:', {
+          isIntersecting: entry.isIntersecting,
+          nextCursor,
+          loadingMore,
+          hasMore
+        });
+
         if (entry.isIntersecting && nextCursor !== null) {
           try {
             setLoadingMore(true);
             const success = await fetchPosts(nextCursor);
             if (!success) {
               console.error('Failed to fetch more posts');
-              // 에러 발생 시 3초 후에 다시 시도
               setTimeout(() => {
                 setLoadError(false);
               }, 3000);
@@ -183,8 +197,8 @@ function App() {
         }
       },
       { 
-        threshold: 0.5,  // 요소가 50% 보일 때 트리거
-        rootMargin: '200px'  // 더 일찍 로딩 시작
+        threshold: 0.5,
+        rootMargin: '200px'
       }
     );
 
@@ -203,6 +217,7 @@ function App() {
       if (selectedTags.length > 0) selectedTags.forEach(tag => params.append('tags', tag));
       if (cursor) params.append('cursor', cursor);
 
+      console.log('Fetching posts with params:', params.toString());
       const response = await fetch(`${API_BASE_URL}/api/posters?${params.toString()}`, {
         method: 'GET',
         headers: {
@@ -215,6 +230,12 @@ function App() {
       }
       
       const data: PostersResponse = await response.json();
+      console.log('API Response:', {
+        cursor,
+        nextCursor: data.nextCursor,
+        hasNext: data.hasNext,
+        postsCount: data.posters.length
+      });
       
       const transformed = data.posters.map((post: any) => ({
         id: post.id,
@@ -242,6 +263,13 @@ function App() {
       setNextCursor(data.nextCursor?.toString() || null);
       setHasMore(data.hasNext);
       setLoadError(false);
+
+      console.log('State after update:', {
+        nextCursor: data.nextCursor?.toString() || null,
+        hasNext: data.hasNext,
+        totalPosts: cursor === null ? transformed.length : posts.length + transformed.length
+      });
+
       return true;
     } catch (error) {
       console.error('Error fetching posts:', error);
