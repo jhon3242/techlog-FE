@@ -560,15 +560,20 @@ function AdminBlogManager() {
                     {/* 본문 */}
                     <div className="p-7 pb-5 flex flex-col flex-1 border-t border-gray-100 bg-[#F5F6FA]">
                       {/* 키워드(태그) */}
-                      <div className="flex gap-2 mb-4">
-                        {(post.tags || []).map((tag: string) => (
+                      <div className="flex flex-wrap gap-2 mb-4 overflow-hidden">
+                        {(post.tags || []).slice(0, 3).map((tag: string) => (
                           <span
                             key={tag}
-                            className="px-4 py-1 rounded-full text-sm font-medium bg-[#ede9fe] text-[#6d28d9]"
+                            className="px-4 py-1 rounded-full text-sm font-medium bg-[#ede9fe] text-[#6d28d9] whitespace-nowrap flex-shrink-0"
                           >
                             {tag}
                           </span>
                         ))}
+                        {(post.tags || []).length > 3 && (
+                          <span className="px-4 py-1 rounded-full text-sm font-medium bg-[#ede9fe] text-[#6d28d9] whitespace-nowrap flex-shrink-0">
+                            +{(post.tags || []).length - 3}
+                          </span>
+                        )}
                       </div>
                       {/* 제목 */}
                       <h3 className="text-2xl font-bold mb-2 text-gray-900">{post.title}</h3>
