@@ -4,14 +4,16 @@ export const blogTypeLogos: { [key: string]: string } = {
   LINE: "/images/line-icon.png",
   KAKAO_PAY: "/images/kakao-pay-icon.png",
   KAKAO: "/images/kakao-icon.png",
-  COUPANG: "/images/coupang-icon.png"
+  COUPANG: "/images/coupang-icon.png",
+  TOSS: "/images/toss-icon.png"
 };
 
 export const blogTypeColors: { [key: string]: string } = {
-  WOOWABRO: "bg-[#40E0D0]",
-  NAVER: "bg-[#03C75A]",
-  LINE: "bg-[#00B900]",
-  KAKAO_PAY: "bg-[#FFE600]",
-  KAKAO: "bg-[#FFE600]",
-  COUPANG: "bg-[#FF4E50]"
+  WOOWABRO: "#40E0D0",
+  NAVER: "#03C75A",
+  LINE: "#00B900",
+  KAKAO_PAY: "#FFE600",
+  KAKAO: "#FFE600",
+  COUPANG: "#FF4E50",
+  TOSS: "#0064FF"
 }; 

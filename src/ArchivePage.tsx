@@ -18,6 +18,31 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { blogTypeLogos, blogTypeColors } from "./constants/blogTypes";
 import { BlogPost, PostersResponse, PosterSearchRequest } from "./types/blog";
 
+const blogTypeNames: Record<string, string> = {
+  'WOOWABRO': '우아한형제들',
+  'NAVER': '네이버',
+  'LINE': '라인',
+  'KAKAO_PAY': '카카오페이',
+  'KAKAO': '카카오',
+  'COUPANG': '쿠팡',
+  'TOSS': '토스'
+};
+
+// 배경색에 따른 글자색 결정 함수
+const getTextColor = (backgroundColor: string): string => {
+  // HEX 색상을 RGB로 변환
+  const hex = backgroundColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  // 밝기 계산 (YIQ 공식)
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  
+  // 밝기가 128보다 크면 어두운 글자색, 작으면 흰색 반환
+  return yiq >= 128 ? '#1F2937' : '#FFFFFF';
+};
+
 function App() {
   // Device ID 생성 및 저장
   const deviceId = useMemo(() => {
@@ -218,22 +243,7 @@ function App() {
   }, []);
 
   const getBrandColor = (blogType: string) => {
-    switch (blogType) {
-      case 'WOOWABRO':
-        return '#40E0D0';
-      case 'NAVER':
-        return '#03C75A';
-      case 'LINE':
-        return '#00C300';
-      case 'KAKAO_PAY':
-        return '#FFCC00';
-      case 'KAKAO':
-        return '#FFCD00';
-      case 'COUPANG':
-        return '#0078FF';
-      default:
-        return '#E5E7EB';
-    }
+    return blogTypeColors[blogType] || '#E5E7EB';
   };
 
   const handlePostClick = (post: BlogPost) => {
@@ -387,6 +397,7 @@ function App() {
               <option value="KAKAO_PAY">카카오페이</option>
               <option value="KAKAO">카카오</option>
               <option value="COUPANG">쿠팡</option>
+              <option value="TOSS">토스</option>
             </select>
             <button
               onClick={handleSearch}
@@ -425,18 +436,8 @@ function App() {
               const blogType = post.blogType || 'UNKNOWN';
               const meta = blogTypeLogos[blogType] ? {
                 logo: blogTypeLogos[blogType],
-                name: blogType === 'WOOWABRO' ? '우아한형제들' :
-                      blogType === 'NAVER' ? '네이버' :
-                      blogType === 'LINE' ? '라인' :
-                      blogType === 'KAKAO_PAY' ? '카카오페이' :
-                      blogType === 'KAKAO' ? '카카오' :
-                      blogType === 'COUPANG' ? '쿠팡' : blogType,
-                color: blogType === 'WOOWABRO' ? '#40E0D0' :
-                       blogType === 'NAVER' ? '#03C75A' :
-                       blogType === 'LINE' ? '#00C300' :
-                       blogType === 'KAKAO_PAY' ? '#FFCC00' :
-                       blogType === 'KAKAO' ? '#FFCD00' :
-                       blogType === 'COUPANG' ? '#0078FF' : '#888',
+                name: blogTypeNames[blogType] || blogType,
+                color: blogTypeColors[blogType] || '#888'
               } : null;
               const isRecommended = localStorage.getItem(`recommended_${post.id}`) === '1';
               return (
@@ -502,7 +503,10 @@ function App() {
                         {meta && (
                           <span
                             className="px-4 py-1 rounded-full text-sm font-semibold"
-                            style={{ backgroundColor: meta.color, color: '#fff' }}
+                            style={{ 
+                              backgroundColor: blogTypeColors[blogType] || '#888',
+                              color: getTextColor(blogTypeColors[blogType] || '#888')
+                            }}
                           >
                             {meta.name}
                           </span>
