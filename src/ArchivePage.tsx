@@ -343,10 +343,20 @@ function App() {
       />
 
       <div className="pt-16 pb-8 max-w-4xl mx-auto px-4">
-        <h1 className="text-4xl font-bold text-center mb-4">
+        <motion.h1 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-4xl font-bold text-center mb-4"
+        >
           Discover Engineering Excellence
-        </h1>
-        <div className="flex flex-col gap-4">
+        </motion.h1>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex flex-col gap-4"
+        >
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -382,7 +392,12 @@ function App() {
               Search
             </button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="flex flex-wrap gap-2"
+          >
             {availableTags.map((tag) => (
               <button
                 key={tag}
@@ -396,14 +411,14 @@ function App() {
                 {tag}
               </button>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4 pb-16">
         {loading
           ? renderSkeleton(6)
-          : posts.map((post) => {
+          : posts.map((post, index) => {
               const blogType = post.blogType || 'UNKNOWN';
               const meta = blogTypeLogos[blogType] ? {
                 logo: blogTypeLogos[blogType],
@@ -422,8 +437,11 @@ function App() {
               } : null;
               const isRecommended = localStorage.getItem(`recommended_${post.id}`) === '1';
               return (
-                <div
+                <motion.div
                   key={post.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 + (index * 0.1) }}
                   className="rounded-2xl overflow-hidden shadow bg-white flex flex-col max-w-xl mx-auto border border-gray-100 mb-8 transition hover:shadow-2xl hover:-translate-y-1 cursor-pointer"
                   onClick={() => handlePostClick(post)}
                 >
@@ -505,7 +523,7 @@ function App() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
         {loadingMore && renderSkeleton(3)}
