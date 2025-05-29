@@ -207,6 +207,11 @@ function App() {
 
   const fetchPosts = async (cursor: string | null): Promise<boolean> => {
     try {
+      // hasNext가 false이고 cursor가 null이 아닌 경우 (추가 로딩 시도) 요청을 보내지 않음
+      if (!hasMore && cursor !== null) {
+        return false;
+      }
+
       if (cursor === null) setLoading(true);
       else setLoadingMore(true);
 
