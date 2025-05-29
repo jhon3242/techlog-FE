@@ -26,7 +26,15 @@ const blogTypeNames: Record<string, string> = {
   'KAKAO': '카카오',
   'COUPANG': '쿠팡',
   'TOSS': '토스',
-  'DDANGN': '딩근'
+  'DAANGN': '딩근',
+  'WATCHA': '왓챠',
+  'MUSINSA': '무신사',
+  'ZIGBANG': '직방',
+  'MEGAZONE_CLOUD': '메가존 클라우드',
+  'YANOLJA_CLOUD': '야놀자 클라우드',
+  'WANTED': '원티드',
+  'NAVER_PLACE': '네이버 플레이스',
+  'STYLE_SHARE': '스타일쉐어'
 };
 
 // 배경색에 따른 글자색 결정 함수
