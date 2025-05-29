@@ -72,6 +72,7 @@ function App() {
   const [successMessage, setSuccessMessage] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [currentX, setCurrentX] = useState(0);
 
   const handleRecommendClick = () => {
     setIsRecommendModalOpen(true);
@@ -380,6 +381,14 @@ function App() {
     }
   }, [selectedBlogType]);
 
+  const handleMouseLeave = () => {
+    setIsPaused(false);
+    // 현재 위치에서부터 다시 시작하도록 애니메이션 재설정
+    const startX = currentX;
+    const endX = startX - 3000;
+    const duration = 40 * (Math.abs(endX - startX) / 3000); // 거리에 비례하여 duration 조정
+  };
+
   const renderSkeleton = (count = 6) =>
     Array.from({ length: count }).map((_, idx) => (
       <div
@@ -495,8 +504,18 @@ function App() {
           >
             <motion.div
               className="flex absolute"
-              animate={{
-                x: [0, -3000],
+              animate={isPaused ? { x: currentX } : {
+                x: [currentX, currentX - 3000],
+              }}
+              onUpdate={(latest) => {
+                if (!isPaused) {
+                  const newX = Number(latest.x);
+                  setCurrentX(newX);
+                  // x가 -3000에 가까워지면 다시 0으로 리셋
+                  if (newX <= -3000) {
+                    setCurrentX(0);
+                  }
+                }
               }}
               transition={{
                 x: {
@@ -505,16 +524,15 @@ function App() {
                   duration: 40,
                   ease: "linear",
                 },
-                paused: isPaused
               }}
             >
-              {[...companyLogos, ...companyLogos, ...companyLogos, ...companyLogos].map((company, index) => (
+              {[...companyLogos, ...companyLogos, ...companyLogos, ...companyLogos, ...companyLogos].map((company, index) => (
                 <motion.div
                   key={`${company.id}-${index}`}
                   className="flex items-center justify-center w-40 h-24 px-4"
                   whileHover={{ scale: 1.1, y: -5 }}
-                  onHoverStart={() => setIsPaused(true)}
-                  onHoverEnd={() => setIsPaused(false)}
+                  onMouseEnter={() => setIsPaused(true)}
+                  onMouseLeave={handleMouseLeave}
                   onClick={() => handleCompanyClick(company.id)}
                 >
                   <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
