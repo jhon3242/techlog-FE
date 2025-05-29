@@ -264,15 +264,14 @@ function App() {
         setPosts(prev => [...prev, ...transformed]);
       }
       
-      // nextCursor가 있으면 hasMore를 true로 설정
-      const hasMoreData = !!data.nextCursor;
-      setNextCursor(data.nextCursor?.toString() || null);
-      setHasMore(hasMoreData);
+      // hasNext가 false면 더 이상 요청을 보내지 않음
+      setHasMore(data.hasNext);
+      setNextCursor(data.hasNext ? data.nextCursor?.toString() || null : null);
       setLoadError(false);
 
       console.log('State after update:', {
-        nextCursor: data.nextCursor?.toString() || null,
-        hasMore: hasMoreData,
+        nextCursor: data.hasNext ? data.nextCursor?.toString() || null : null,
+        hasMore: data.hasNext,
         totalPosts: cursor === null ? transformed.length : posts.length + transformed.length
       });
 
