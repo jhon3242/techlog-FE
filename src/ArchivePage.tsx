@@ -25,7 +25,8 @@ const blogTypeNames: Record<string, string> = {
   'KAKAO_PAY': '카카오페이',
   'KAKAO': '카카오',
   'COUPANG': '쿠팡',
-  'TOSS': '토스'
+  'TOSS': '토스',
+  'DDANGN': '딩근'
 };
 
 // 배경색에 따른 글자색 결정 함수
@@ -159,11 +160,10 @@ function App() {
   }, [searchQuery, selectedBlogType, selectedTags]);
 
   useEffect(() => {
-    if (!observerRef.current || loadingMore || !hasMore) {
+    if (!observerRef.current || loadingMore) {
       console.log('Observer not initialized:', {
         hasObserverRef: !!observerRef.current,
-        loadingMore,
-        hasMore
+        loadingMore
       });
       return;
     }
@@ -174,8 +174,7 @@ function App() {
         console.log('Intersection observer triggered:', {
           isIntersecting: entry.isIntersecting,
           nextCursor,
-          loadingMore,
-          hasMore
+          loadingMore
         });
 
         if (entry.isIntersecting && nextCursor !== null) {
@@ -204,7 +203,7 @@ function App() {
 
     observer.observe(observerRef.current);
     return () => observer.disconnect();
-  }, [nextCursor, loadingMore, hasMore]);
+  }, [nextCursor, loadingMore]);
 
   const fetchPosts = async (cursor: string | null): Promise<boolean> => {
     try {
@@ -260,13 +259,15 @@ function App() {
         setPosts(prev => [...prev, ...transformed]);
       }
       
+      // nextCursor가 있으면 hasMore를 true로 설정
+      const hasMoreData = !!data.nextCursor;
       setNextCursor(data.nextCursor?.toString() || null);
-      setHasMore(data.hasNext);
+      setHasMore(hasMoreData);
       setLoadError(false);
 
       console.log('State after update:', {
         nextCursor: data.nextCursor?.toString() || null,
-        hasNext: data.hasNext,
+        hasMore: hasMoreData,
         totalPosts: cursor === null ? transformed.length : posts.length + transformed.length
       });
 

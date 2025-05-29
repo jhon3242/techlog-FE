@@ -5,7 +5,8 @@ export const blogTypeLogos: { [key: string]: string } = {
   KAKAO_PAY: "/images/kakao-pay-icon.png",
   KAKAO: "/images/kakao-icon.png",
   COUPANG: "/images/coupang-icon.png",
-  TOSS: "/images/toss-icon.png"
+  TOSS: "/images/toss-icon.png",
+  DDANGN: "/images/ddangn-icon.png"
 };
 
 export const blogTypeColors: { [key: string]: string } = {
@@ -15,5 +16,6 @@ export const blogTypeColors: { [key: string]: string } = {
   KAKAO_PAY: "#FFE600",
   KAKAO: "#FFE600",
   COUPANG: "#FF4E50",
-  TOSS: "#0064FF"
+  TOSS: "#0064FF",
+  DDANGN: "#E78111"
 }; 
