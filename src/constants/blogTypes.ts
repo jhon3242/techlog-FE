@@ -1,4 +1,5 @@
-export const blogTypeLogos: { [key: string]: string } = {
+export const 
+blogTypeLogos: { [key: string]: string } = {
   WOOWABRO: "/images/woowa-icon.png",
   NAVER: "/images/naver-icon.png",
   LINE: "/images/line-icon.png",
@@ -6,7 +7,7 @@ export const blogTypeLogos: { [key: string]: string } = {
   KAKAO: "/images/kakao-icon.png",
   COUPANG: "/images/coupang-icon.png",
   TOSS: "/images/toss-icon.png",
-  DDANGN: "/images/ddangn-icon.png"
+  DAANGN: "/images/daangn-icon.png"
 };
 
 export const blogTypeColors: { [key: string]: string } = {
@@ -17,5 +18,5 @@ export const blogTypeColors: { [key: string]: string } = {
   KAKAO: "#FFE600",
   COUPANG: "#FF4E50",
   TOSS: "#0064FF",
-  DDANGN: "#E78111"
+  DAANGN: "#E78111"
 }; 

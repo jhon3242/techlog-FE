@@ -44,6 +44,18 @@ const getTextColor = (backgroundColor: string): string => {
   return yiq >= 128 ? '#1F2937' : '#FFFFFF';
 };
 
+// 회사 로고 데이터 추가
+const companyLogos = [
+  { id: 'WOOWABRO', name: '우아한형제들', logo: blogTypeLogos['WOOWABRO'] },
+  { id: 'NAVER', name: '네이버', logo: blogTypeLogos['NAVER'] },
+  { id: 'LINE', name: '라인', logo: blogTypeLogos['LINE'] },
+  { id: 'KAKAO_PAY', name: '카카오페이', logo: blogTypeLogos['KAKAO_PAY'] },
+  { id: 'KAKAO', name: '카카오', logo: blogTypeLogos['KAKAO'] },
+  { id: 'COUPANG', name: '쿠팡', logo: blogTypeLogos['COUPANG'] },
+  { id: 'TOSS', name: '토스', logo: blogTypeLogos['TOSS'] },
+  { id: 'DAANGN', name: '당근', logo: blogTypeLogos['DAANGN'] },
+];
+
 function App() {
   // Device ID 생성 및 저장
   const deviceId = useMemo(() => {
@@ -59,6 +71,7 @@ function App() {
   const [isRecommendModalOpen, setIsRecommendModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
 
   const handleRecommendClick = () => {
     setIsRecommendModalOpen(true);
@@ -207,7 +220,6 @@ function App() {
 
   const fetchPosts = async (cursor: string | null): Promise<boolean> => {
     try {
-      // hasNext가 false이고 cursor가 null이 아닌 경우 (추가 로딩 시도) 요청을 보내지 않음
       if (!hasMore && cursor !== null) {
         return false;
       }
@@ -217,11 +229,20 @@ function App() {
 
       const params = new URLSearchParams();
       if (searchQuery.trim()) params.append('keyword', searchQuery.trim());
-      if (selectedBlogType) params.append('blogType', selectedBlogType);
+      if (selectedBlogType) {
+        console.log('Using blogType:', selectedBlogType);
+        params.append('blogType', selectedBlogType);
+      }
       if (selectedTags.length > 0) selectedTags.forEach(tag => params.append('tags', tag));
       if (cursor) params.append('cursor', cursor);
 
-      console.log('Fetching posts with params:', params.toString());
+      console.log('Fetching posts with params:', {
+        keyword: searchQuery.trim(),
+        blogType: selectedBlogType,
+        tags: selectedTags,
+        cursor
+      });
+
       const response = await fetch(`${API_BASE_URL}/api/posters?${params.toString()}`, {
         method: 'GET',
         headers: {
@@ -238,7 +259,8 @@ function App() {
         cursor,
         nextCursor: data.nextCursor,
         hasNext: data.hasNext,
-        postsCount: data.posters.length
+        postsCount: data.posters.length,
+        blogType: selectedBlogType
       });
       
       const transformed = data.posters.map((post: any) => ({
@@ -264,16 +286,9 @@ function App() {
         setPosts(prev => [...prev, ...transformed]);
       }
       
-      // hasNext가 false면 더 이상 요청을 보내지 않음
       setHasMore(data.hasNext);
       setNextCursor(data.hasNext ? data.nextCursor?.toString() || null : null);
       setLoadError(false);
-
-      console.log('State after update:', {
-        nextCursor: data.hasNext ? data.nextCursor?.toString() || null : null,
-        hasMore: data.hasNext,
-        totalPosts: cursor === null ? transformed.length : posts.length + transformed.length
-      });
 
       return true;
     } catch (error) {
@@ -350,6 +365,20 @@ function App() {
       console.error("Failed to recommend", e);
     }
   };
+
+  const handleCompanyClick = (companyId: string) => {
+    setSelectedBlogType(companyId);
+  };
+
+  // selectedBlogType이 변경될 때마다 검색 실행
+  useEffect(() => {
+    if (selectedBlogType) {
+      setPosts([]);
+      setNextCursor(null);
+      setHasMore(true);
+      fetchPosts(null);
+    }
+  }, [selectedBlogType]);
 
   const renderSkeleton = (count = 6) =>
     Array.from({ length: count }).map((_, idx) => (
@@ -445,13 +474,9 @@ function App() {
               className="py-3 px-4 rounded-xl border border-gray-300 bg-white/80 backdrop-blur focus:ring-2 focus:ring-[#4C8CF7]"
             >
               <option value="">전체 블로그</option>
-              <option value="WOOWABRO">우아한형제들</option>
-              <option value="NAVER">네이버</option>
-              <option value="LINE">라인</option>
-              <option value="KAKAO_PAY">카카오페이</option>
-              <option value="KAKAO">카카오</option>
-              <option value="COUPANG">쿠팡</option>
-              <option value="TOSS">토스</option>
+              {companyLogos.map(company => (
+                <option key={company.id} value={company.id}>{company.name}</option>
+              ))}
             </select>
             <button
               onClick={handleSearch}
@@ -460,25 +485,54 @@ function App() {
               Search
             </button>
           </div>
+          
+          {/* 회사 로고 캐러셀 */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            className="relative w-screen h-24 overflow-hidden -mx-[calc(50vw-50%)]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-wrap gap-2"
           >
-            {availableTags.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => handleTagToggle(tag)}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  selectedTags.includes(tag)
-                    ? 'bg-[#4C8CF7] text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
+            <motion.div
+              className="flex absolute"
+              animate={{
+                x: [0, -3000],
+              }}
+              transition={{
+                x: {
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  duration: 40,
+                  ease: "linear",
+                },
+                paused: isPaused
+              }}
+            >
+              {[...companyLogos, ...companyLogos, ...companyLogos, ...companyLogos].map((company, index) => (
+                <motion.div
+                  key={`${company.id}-${index}`}
+                  className="flex items-center justify-center w-40 h-24 px-4"
+                  whileHover={{ scale: 1.1, y: -5 }}
+                  onHoverStart={() => setIsPaused(true)}
+                  onHoverEnd={() => setIsPaused(false)}
+                  onClick={() => handleCompanyClick(company.id)}
+                >
+                  <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+                    <img
+                      src={company.logo}
+                      alt={company.name}
+                      className={`${
+                        company.id === 'NAVER'
+                          ? 'w-10 h-10 object-cover'
+                          : company.id === 'WOOWABRO'
+                            ? 'w-8 h-8 object-contain'
+                            : 'w-9 h-9 object-contain'
+                      }`}
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
           </motion.div>
         </motion.div>
       </div>
