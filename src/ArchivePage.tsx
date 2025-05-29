@@ -62,6 +62,14 @@ const companyLogos = [
   { id: 'COUPANG', name: '쿠팡', logo: blogTypeLogos['COUPANG'] },
   { id: 'TOSS', name: '토스', logo: blogTypeLogos['TOSS'] },
   { id: 'DAANGN', name: '당근', logo: blogTypeLogos['DAANGN'] },
+  { id: 'WATCHA', name: '왓챠', logo: blogTypeLogos['WATCHA'] },
+  { id: 'MUSINSA', name: '무신사', logo: blogTypeLogos['MUSINSA'] },
+  { id: 'ZIGBANG', name: '직방', logo: blogTypeLogos['ZIGBANG'] },
+  { id: 'MEGAZONE_CLOUD', name: '메가존 클라우드', logo: blogTypeLogos['MEGAZONE_CLOUD'] },
+  { id: 'YANOLJA_CLOUD', name: '야놀자 클라우드', logo: blogTypeLogos['YANOLJA_CLOUD'] },
+  { id: 'WANTED', name: '원티드', logo: blogTypeLogos['WANTED'] },
+  { id: 'NAVER_PLACE', name: '네이버 플레이스', logo: blogTypeLogos['NAVER_PLACE'] },
+  { id: 'STYLE_SHARE', name: '스타일쉐어', logo: blogTypeLogos['STYLE_SHARE'] }
 ];
 
 function App() {
