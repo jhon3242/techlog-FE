@@ -4,7 +4,7 @@ import AdminRecommendManager from './AdminRecommendManager';
 import { BookMarked, PlusCircle, ChevronLeft, ChevronRight, Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from './utils/apiConfig';
-import { blogTypeLogos, blogTypeColors } from './constants/blogTypes';
+import { blogTypeLogos, blogTypeColors, blogTypes } from './constants/blogTypes';
 import { motion, AnimatePresence } from "framer-motion";
 
 interface BlogResponse {
@@ -15,25 +15,6 @@ interface BlogResponse {
   blogType: string;
   tags?: string[];
 }
-
-const blogTypes = [
-  { value: "WOOWABRO", label: "우아한형제들" },
-  { value: "NAVER", label: "네이버" },
-  { value: "LINE", label: "라인" },
-  { value: "KAKAO_PAY", label: "카카오페이" },
-  { value: "KAKAO", label: "카카오" },
-  { value: "COUPANG", label: "쿠팡" },
-  { value: "TOSS", label: "토스" },
-  { value: "DAANGN", label: "딩근" },
-  { value: "WATCHA", label: "왓챠" },
-  { value: "MUSINSA", label: "무신사" },
-  { value: "ZIGBANG", label: "직방" },
-  { value: "MEGAZONE_CLOUD", label: "메가존 클라우드" },
-  { value: "YANOLJA_CLOUD", label: "야놀자 클라우드" },
-  { value: "WANTED", label: "원티드" },
-  { value: "NAVER_PLACE", label: "네이버 플레이스" },
-  { value: "STYLE_SHARE", label: "스타일쉐어" }
-];
 
 function AdminBlogManager() {
   const navigate = useNavigate();

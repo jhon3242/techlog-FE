@@ -15,27 +15,8 @@ import { v4 as uuidv4 } from "uuid";
 import { API_BASE_URL } from "./utils/apiConfig";
 import { RecommendModal } from "./components/RecommendModal";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { blogTypeLogos, blogTypeColors } from "./constants/blogTypes";
+import { blogTypeLogos, blogTypeColors, blogTypeNames, companyLogos } from "./constants/blogTypes";
 import { BlogPost, PostersResponse, PosterSearchRequest } from "./types/blog";
-
-const blogTypeNames: Record<string, string> = {
-  'WOOWABRO': '우아한형제들',
-  'NAVER': '네이버',
-  'LINE': '라인',
-  'KAKAO_PAY': '카카오페이',
-  'KAKAO': '카카오',
-  'COUPANG': '쿠팡',
-  'TOSS': '토스',
-  'DAANGN': '딩근',
-  'WATCHA': '왓챠',
-  'MUSINSA': '무신사',
-  'ZIGBANG': '직방',
-  'MEGAZONE_CLOUD': '메가존 클라우드',
-  'YANOLJA_CLOUD': '야놀자 클라우드',
-  'WANTED': '원티드',
-  'NAVER_PLACE': '네이버 플레이스',
-  'STYLE_SHARE': '스타일쉐어'
-};
 
 // 배경색에 따른 글자색 결정 함수
 const getTextColor = (backgroundColor: string): string => {
@@ -51,26 +32,6 @@ const getTextColor = (backgroundColor: string): string => {
   // 밝기가 128보다 크면 어두운 글자색, 작으면 흰색 반환
   return yiq >= 128 ? '#1F2937' : '#FFFFFF';
 };
-
-// 회사 로고 데이터 추가
-const companyLogos = [
-  { id: 'WOOWABRO', name: '우아한형제들', logo: blogTypeLogos['WOOWABRO'] },
-  { id: 'NAVER', name: '네이버', logo: blogTypeLogos['NAVER'] },
-  { id: 'LINE', name: '라인', logo: blogTypeLogos['LINE'] },
-  { id: 'KAKAO_PAY', name: '카카오페이', logo: blogTypeLogos['KAKAO_PAY'] },
-  { id: 'KAKAO', name: '카카오', logo: blogTypeLogos['KAKAO'] },
-  { id: 'COUPANG', name: '쿠팡', logo: blogTypeLogos['COUPANG'] },
-  { id: 'TOSS', name: '토스', logo: blogTypeLogos['TOSS'] },
-  { id: 'DAANGN', name: '당근', logo: blogTypeLogos['DAANGN'] },
-  { id: 'WATCHA', name: '왓챠', logo: blogTypeLogos['WATCHA'] },
-  { id: 'MUSINSA', name: '무신사', logo: blogTypeLogos['MUSINSA'] },
-  { id: 'ZIGBANG', name: '직방', logo: blogTypeLogos['ZIGBANG'] },
-  { id: 'MEGAZONE_CLOUD', name: '메가존 클라우드', logo: blogTypeLogos['MEGAZONE_CLOUD'] },
-  { id: 'YANOLJA_CLOUD', name: '야놀자 클라우드', logo: blogTypeLogos['YANOLJA_CLOUD'] },
-  { id: 'WANTED', name: '원티드', logo: blogTypeLogos['WANTED'] },
-  { id: 'NAVER_PLACE', name: '네이버 플레이스', logo: blogTypeLogos['NAVER_PLACE'] },
-  { id: 'STYLE_SHARE', name: '스타일쉐어', logo: blogTypeLogos['STYLE_SHARE'] }
-];
 
 function App() {
   // Device ID 생성 및 저장
