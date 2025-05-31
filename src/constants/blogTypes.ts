@@ -21,7 +21,10 @@ export const blogTypeLogos: { [key: string]: string } = {
   YANOLJA_CLOUD: "/images/yanolja-cloud-icon.png",
   WANTED: "/images/wanted-icon.png",
   NAVER_PLACE: "/images/naver-place-icon.png",
-  STYLE_SHARE: "/images/style-share-icon.png"
+  STYLE_SHARE: "/images/style-share-icon.png",
+  NHN: "/images/nhn-icon.png",
+  KURLY: "/images/kurly-icon.png",
+  YEOGI: "/images/yeogi-icon.png"
 };
 
 export const blogTypeColors: { [key: string]: string } = {
@@ -40,7 +43,10 @@ export const blogTypeColors: { [key: string]: string } = {
   YANOLJA_CLOUD: "#172B4D",
   WANTED: "#0066FF",
   NAVER_PLACE: "#03C75A",
-  STYLE_SHARE: "#000000"
+  STYLE_SHARE: "#000000",
+  NHN: "#191919",
+  KURLY: "#5F0080",
+  YEOGI: "#F83747"
 };
 
 export const blogTypeNames: Record<string, string> = {
@@ -59,7 +65,10 @@ export const blogTypeNames: Record<string, string> = {
   'YANOLJA_CLOUD': '야놀자 클라우드',
   'WANTED': '원티드',
   'NAVER_PLACE': '네이버 플레이스',
-  'STYLE_SHARE': '스타일쉐어'
+  'STYLE_SHARE': '스타일쉐어',
+  'NHN': 'NHN',
+  'KURLY': '마켓컬리',
+  'YEOGI': '여기어때'
 };
 
 export const companyLogos: BlogType[] = [
@@ -78,7 +87,10 @@ export const companyLogos: BlogType[] = [
   { id: 'YANOLJA_CLOUD', name: blogTypeNames['YANOLJA_CLOUD'], logo: blogTypeLogos['YANOLJA_CLOUD'], color: blogTypeColors['YANOLJA_CLOUD'] },
   { id: 'WANTED', name: blogTypeNames['WANTED'], logo: blogTypeLogos['WANTED'], color: blogTypeColors['WANTED'] },
   { id: 'NAVER_PLACE', name: blogTypeNames['NAVER_PLACE'], logo: blogTypeLogos['NAVER_PLACE'], color: blogTypeColors['NAVER_PLACE'] },
-  { id: 'STYLE_SHARE', name: blogTypeNames['STYLE_SHARE'], logo: blogTypeLogos['STYLE_SHARE'], color: blogTypeColors['STYLE_SHARE'] }
+  { id: 'STYLE_SHARE', name: blogTypeNames['STYLE_SHARE'], logo: blogTypeLogos['STYLE_SHARE'], color: blogTypeColors['STYLE_SHARE'] },
+  { id: 'NHN', name: blogTypeNames['NHN'], logo: blogTypeLogos['NHN'], color: blogTypeColors['NHN'] },
+  { id: 'KURLY', name: blogTypeNames['KURLY'], logo: blogTypeLogos['KURLY'], color: blogTypeColors['KURLY'] },
+  { id: 'YEOGI', name: blogTypeNames['YEOGI'], logo: blogTypeLogos['YEOGI'], color: blogTypeColors['YEOGI'] }
 ];
 
 export const blogTypes = companyLogos.map(company => ({
