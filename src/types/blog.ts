@@ -5,7 +5,7 @@ export interface BlogPost {
   summary?: string;
   imageUrl: string;
   tags?: string[];
-  recommendations?: number;
+  likeCount?: number;
   views?: number;
   brandColor?: string;
   content?: string;

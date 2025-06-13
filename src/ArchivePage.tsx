@@ -250,7 +250,7 @@ function App() {
           : "No summary available",
         imageUrl: post.thumbnail || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=500",
         tags: post.tags || [],
-        recommendations: post.recommendations || 0,
+        likeCount: post.likeCount || 0,
         views: post.views || 0,
         brandColor: getBrandColor(post.blogType || ''),
         content: post.content,
@@ -315,7 +315,7 @@ function App() {
     const isRecommended = localStorage.getItem(recommendedKey) === '1';
     
     try {
-      await fetch(`${API_BASE_URL}/api/posters/${postId}/recommend`, {
+      await fetch(`${API_BASE_URL}/api/posters/${postId}/like`, {
         method: isRecommended ? "DELETE" : "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -326,7 +326,7 @@ function App() {
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId
-            ? { ...p, recommendations: (p.recommendations || 0) + (isRecommended ? -1 : 1) }
+            ? { ...p, likeCount: (p.likeCount || 0) + (isRecommended ? -1 : 1) }
             : p
         )
       );
@@ -334,7 +334,7 @@ function App() {
       if (selectedPost?.id === postId) {
         setSelectedPost({
           ...selectedPost,
-          recommendations: (selectedPost.recommendations || 0) + (isRecommended ? -1 : 1),
+          likeCount: (selectedPost.likeCount || 0) + (isRecommended ? -1 : 1),
         });
       }
       
@@ -638,7 +638,7 @@ function App() {
                         >
                           <Heart size={20} />
                         </button>
-                        <span className="text-base">{post.recommendations}</span>
+                        <span className="text-base">{post.likeCount}</span>
                         <div className="flex items-center gap-1 text-gray-700">
                           <Eye size={20} />
                           <span className="text-base">{post.views}</span>
@@ -766,7 +766,7 @@ function App() {
                     >
                       <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
-                    <span className="text-sm sm:text-base">{selectedPost.recommendations}</span>
+                    <span className="text-sm sm:text-base">{selectedPost.likeCount}</span>
                   </div>
                   <div className="flex items-center space-x-1 text-gray-600">
                     <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
