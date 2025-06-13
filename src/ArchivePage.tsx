@@ -433,6 +433,16 @@ function App() {
         >
           Find insight. Techlog
         </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-gray-600 text-center text-sm mb-8 max-w-2xl mx-auto"
+        >
+          좋은 글은 개발자의 성장에 큰 영감을 줍니다.
+          <br />
+          Techlog는 검증된 기술 블로그에서 선별한 글만 모아, 더 나은 인사이트 탐색 경험을 제공합니다.
+        </motion.p>
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
